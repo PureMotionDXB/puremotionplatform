@@ -22,12 +22,13 @@ create table if not exists classes (
 alter table instructors enable row level security;
 alter table classes enable row level security;
 
--- TEMPORARY — open read/write until real staff login exists.
--- Anyone with the publishable key can currently read AND write these
--- tables. Replace with policies scoped to authenticated staff before
--- this goes live with real clients.
+-- Reads are public (clients browse the schedule without logging in).
+-- Writes require a signed-in staff account (see src/proxy.ts and
+-- src/app/admin/login).
 create policy "Public read instructors" on instructors for select using (true);
-create policy "Public write instructors" on instructors for all using (true) with check (true);
+create policy "Staff write instructors" on instructors for all
+  using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 
 create policy "Public read classes" on classes for select using (true);
-create policy "Public write classes" on classes for all using (true) with check (true);
+create policy "Staff write classes" on classes for all
+  using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');

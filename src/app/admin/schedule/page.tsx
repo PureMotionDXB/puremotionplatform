@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { DAYS, emptyClass, type Instructor, type ScheduledClass } from "@/lib/schedule-data";
 import {
@@ -65,6 +65,13 @@ export default function AdminSchedulePage() {
     setForm(rest);
   }
 
+  function startDuplicate(cls: ScheduledClass) {
+    setEditingId("__new__");
+    const { id: _id, ...rest } = cls;
+    void _id;
+    setForm({ ...rest, booked: 0 });
+  }
+
   function cancelForm() {
     setEditingId(null);
     setForm(null);
@@ -119,6 +126,11 @@ export default function AdminSchedulePage() {
     }
   }
 
+  const classNames = useMemo(
+    () => Array.from(new Set(classes.map((c) => c.name))).sort(),
+    [classes],
+  );
+
   const grouped = DAYS.map((label, dayIndex) => ({
     label,
     dayIndex,
@@ -169,7 +181,13 @@ export default function AdminSchedulePage() {
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   placeholder="e.g. Reformer Intermediate"
+                  list="class-name-options"
                 />
+                <datalist id="class-name-options">
+                  {classNames.map((n) => (
+                    <option key={n} value={n} />
+                  ))}
+                </datalist>
               </Field>
               <Field label="Category">
                 <select
@@ -249,17 +267,19 @@ export default function AdminSchedulePage() {
                   }
                 />
               </Field>
-              <Field label="Already booked (seed)">
-                <input
-                  type="number"
-                  min={0}
-                  className="field-input"
-                  value={form.booked}
-                  onChange={(e) =>
-                    setForm({ ...form, booked: Number(e.target.value) || 0 })
-                  }
-                />
-              </Field>
+              {editingId !== "__new__" && (
+                <Field label="Already booked">
+                  <input
+                    type="number"
+                    min={0}
+                    className="field-input"
+                    value={form.booked}
+                    onChange={(e) =>
+                      setForm({ ...form, booked: Number(e.target.value) || 0 })
+                    }
+                  />
+                </Field>
+              )}
             </div>
             <div className="mt-4 flex gap-2.5">
               <button
@@ -360,12 +380,18 @@ export default function AdminSchedulePage() {
                             <td className="px-3 py-2.5 font-mono">
                               {c.booked}/{c.capacity}
                             </td>
-                            <td className="px-3 py-2.5 text-right">
+                            <td className="px-3 py-2.5 text-right whitespace-nowrap">
                               <button
                                 onClick={() => startEdit(c)}
                                 className="mr-2 text-[12px] font-bold text-accent-strong hover:underline"
                               >
                                 Edit
+                              </button>
+                              <button
+                                onClick={() => startDuplicate(c)}
+                                className="mr-2 text-[12px] font-bold text-ink-secondary hover:underline"
+                              >
+                                Duplicate
                               </button>
                               <button
                                 onClick={() => removeClass(c.id)}
