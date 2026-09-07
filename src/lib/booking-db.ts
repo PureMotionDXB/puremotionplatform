@@ -126,6 +126,7 @@ export interface ClientProfile {
   fullName: string;
   phone: string | null;
   gender: "female" | "male" | "unspecified";
+  dateOfBirth: string | null;
   reformerCredits: number;
   matCredits: number;
 }
@@ -135,6 +136,7 @@ interface ClientRow {
   full_name: string;
   phone: string | null;
   gender: "female" | "male" | "unspecified";
+  date_of_birth: string | null;
   reformer_credits: number;
   mat_credits: number;
 }
@@ -164,6 +166,7 @@ export async function fetchMyClient(): Promise<ClientProfile | null> {
       fullName: row.full_name,
       phone: row.phone,
       gender: row.gender,
+      dateOfBirth: row.date_of_birth,
       reformerCredits: row.reformer_credits,
       matCredits: row.mat_credits,
     };
@@ -173,10 +176,15 @@ export async function fetchMyClient(): Promise<ClientProfile | null> {
     full_name?: string;
     phone?: string;
     gender?: "female" | "male" | "unspecified";
+    date_of_birth?: string;
+    liability_accepted?: boolean;
   };
-  // upsert (not insert) because two concurrent calls can both see "no row
-  // yet" and race to create one — e.g. React Strict Mode double-invoking
-  // this on mount in development.
+  // ignoreDuplicates (ON CONFLICT DO NOTHING) rather than a plain upsert
+  // (ON CONFLICT DO UPDATE) — two concurrent calls can both see "no row
+  // yet" and race to create one (e.g. React Strict Mode double-invoking
+  // this on mount in development), and a plain upsert would need UPDATE
+  // privilege on every column here, undermining the point of locking
+  // date_of_birth/liability_accepted_at to insert-only.
   const { data: created, error: createError } = await supabase
     .from("clients")
     .upsert(
@@ -185,18 +193,32 @@ export async function fetchMyClient(): Promise<ClientProfile | null> {
         full_name: meta.full_name ?? "",
         phone: meta.phone ?? null,
         gender: meta.gender ?? "unspecified",
+        date_of_birth: meta.date_of_birth ?? null,
+        liability_accepted_at: meta.liability_accepted ? new Date().toISOString() : null,
       },
-      { onConflict: "id" },
+      { onConflict: "id", ignoreDuplicates: true },
     )
     .select()
-    .single();
+    .maybeSingle();
   if (createError) throw createError;
-  const row = created as ClientRow;
+
+  let row = created as ClientRow | null;
+  if (!row) {
+    // Lost the race — another call already created the row. Just read it.
+    const { data: existing, error: fetchError } = await supabase
+      .from("clients")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+    if (fetchError) throw fetchError;
+    row = existing as ClientRow;
+  }
   return {
     id: row.id,
     fullName: row.full_name,
     phone: row.phone,
     gender: row.gender,
+    dateOfBirth: row.date_of_birth,
     reformerCredits: row.reformer_credits,
     matCredits: row.mat_credits,
   };
