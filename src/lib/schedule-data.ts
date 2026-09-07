@@ -5,21 +5,33 @@ export interface ScheduledClass {
   day: number; // 0=Mon..6=Sun
   time: string;
   name: string;
-  family: ClassFamily;
-  instructor: string;
+  family: ClassFamily; // "Category" — which credit pool this class draws from
+  creditCost: number; // "Pricing category" — credits a single booking consumes (usually 1)
+  instructor: string; // instructor id, see `instructorsList`
   capacity: number;
   booked: number;
 }
 
 export const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 
-// Placeholder instructor names — swap in the real roster before launch.
-export const instructors: Record<string, string> = {
-  leila: "Leila Haddad",
-  noor: "Noor Al Farsi",
-  sophie: "Sophie Bennett",
-  amira: "Amira Khoury",
-};
+export interface Instructor {
+  id: string;
+  name: string;
+}
+
+// Placeholder instructor roster — editable from /admin/schedule, and
+// ultimately backed by the database once it's connected.
+export const defaultInstructors: Instructor[] = [
+  { id: "leila", name: "Leila Haddad" },
+  { id: "noor", name: "Noor Al Farsi" },
+  { id: "sophie", name: "Sophie Bennett" },
+  { id: "amira", name: "Amira Khoury" },
+];
+
+// Kept for components (like ClassCard) that just need id -> name.
+export const instructors: Record<string, string> = Object.fromEntries(
+  defaultInstructors.map((i) => [i.id, i.name]),
+);
 
 function family(name: string): ClassFamily {
   return name.startsWith("Reformer") ? "reformer" : "mat";
@@ -95,10 +107,24 @@ export const schedule: ScheduledClass[] = seed.map((row, i) => ({
   time: row[1],
   name: row[2],
   family: family(row[2]),
+  creditCost: 1,
   instructor: row[3],
   capacity: row[4],
   booked: row[5],
 }));
+
+export function emptyClass(): Omit<ScheduledClass, "id"> {
+  return {
+    day: 0,
+    time: "08:00",
+    name: "",
+    family: "reformer",
+    creditCost: 1,
+    instructor: defaultInstructors[0]?.id ?? "",
+    capacity: 10,
+    booked: 0,
+  };
+}
 
 export type SpotStatus = "good" | "warning" | "critical";
 

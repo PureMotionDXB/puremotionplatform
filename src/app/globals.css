@@ -144,3 +144,17 @@ h1, h2, h3, h4 {
   text-wrap: balance;
   letter-spacing: -0.01em;
 }
+
+.field-input {
+  padding: 9px 11px;
+  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--ink);
+  width: 100%;
+  font-size: 13px;
+}
+.field-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
