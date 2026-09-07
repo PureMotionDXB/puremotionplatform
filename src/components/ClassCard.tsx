@@ -1,5 +1,14 @@
 import type { ReactNode } from "react";
-import { statusFor, statusLabel, type ScheduledClass } from "@/lib/schedule-data";
+import { statusFor, statusLabel, type ClassFamily } from "@/lib/schedule-data";
+
+interface CardClass {
+  time: string;
+  name: string;
+  family: ClassFamily;
+  ladiesOnly: boolean;
+  capacity: number;
+  booked: number;
+}
 
 const familyColor: Record<string, string> = {
   reformer: "var(--family-reformer)",
@@ -28,7 +37,7 @@ export function ClassCard({
   instructorName,
   action,
 }: {
-  cls: ScheduledClass;
+  cls: CardClass;
   instructorName: string;
   action?: ReactNode;
 }) {

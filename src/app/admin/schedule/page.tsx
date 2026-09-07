@@ -2,7 +2,13 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { DAYS, emptyClass, type Instructor, type ScheduledClass } from "@/lib/schedule-data";
+import {
+  DAYS,
+  emptyClass,
+  getErrorMessage,
+  type Instructor,
+  type ScheduledClass,
+} from "@/lib/schedule-data";
 import {
   deleteClass,
   fetchClasses,
@@ -45,7 +51,7 @@ export default function AdminSchedulePage() {
         })
         .catch((err) => {
           if (cancelled) return;
-          setError(err instanceof Error ? err.message : "Failed to load the schedule.");
+          setError(getErrorMessage(err, "Failed to load the schedule."));
         })
         .finally(() => {
           if (!cancelled) setLoading(false);
@@ -93,7 +99,7 @@ export default function AdminSchedulePage() {
       }
       cancelForm();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save the class.");
+      setError(getErrorMessage(err, "Failed to save the class."));
     } finally {
       setSaving(false);
     }
@@ -108,7 +114,7 @@ export default function AdminSchedulePage() {
       await deleteClass(id);
     } catch (err) {
       setClasses(prev);
-      setError(err instanceof Error ? err.message : "Failed to remove the class.");
+      setError(getErrorMessage(err, "Failed to remove the class."));
     }
   }
 
@@ -122,7 +128,7 @@ export default function AdminSchedulePage() {
       setInstructorRoster((prev) => [...prev, { id, name }]);
       setNewInstructorName("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to add the instructor.");
+      setError(getErrorMessage(err, "Failed to add the instructor."));
     }
   }
 

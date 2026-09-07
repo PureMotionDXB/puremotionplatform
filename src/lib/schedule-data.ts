@@ -38,16 +38,34 @@ export function firstName(fullName: string): string {
   return fullName.trim().split(/\s+/)[0] ?? fullName;
 }
 
+// Supabase/PostgREST errors (including RPC errors) are plain objects
+// with a `message` field, not real `Error` instances, so a bare
+// `instanceof Error` check misses them and falls back to a generic
+// message. This checks both shapes.
+export function getErrorMessage(err: unknown, fallback: string): string {
+  if (err instanceof Error) return err.message;
+  if (err && typeof err === "object" && "message" in err) {
+    const message = (err as { message: unknown }).message;
+    if (typeof message === "string" && message) return message;
+  }
+  return fallback;
+}
+
 export type SpotStatus = "good" | "warning" | "critical";
 
-export function statusFor(cls: ScheduledClass): SpotStatus {
+interface Occupancy {
+  capacity: number;
+  booked: number;
+}
+
+export function statusFor(cls: Occupancy): SpotStatus {
   const left = cls.capacity - cls.booked;
   if (left <= 0) return "critical";
   if (left <= 2) return "warning";
   return "good";
 }
 
-export function statusLabel(cls: ScheduledClass): string {
+export function statusLabel(cls: Occupancy): string {
   const left = cls.capacity - cls.booked;
   if (left <= 0) return "Full";
   if (left <= 2) return `${left} left`;

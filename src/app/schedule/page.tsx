@@ -3,46 +3,78 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ClassCard } from "@/components/ClassCard";
+import { firstName, getErrorMessage, statusFor, type Instructor } from "@/lib/schedule-data";
+import { fetchInstructors } from "@/lib/schedule-db";
 import {
-  DAYS,
-  firstName,
-  statusFor,
-  type Instructor,
-  type ScheduledClass,
-} from "@/lib/schedule-data";
-import { fetchClasses, fetchInstructors } from "@/lib/schedule-db";
+  bookClass,
+  cancelBooking,
+  ensureOccurrences,
+  fetchMyClient,
+  fetchOccurrences,
+  type OccurrenceView,
+} from "@/lib/booking-db";
 
-const TODAY = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+const DAYS_AHEAD = 14;
+
+function toISODate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function dateLabel(iso: string) {
+  const d = new Date(`${iso}T00:00:00`);
+  return {
+    weekday: d.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase(),
+    day: d.getDate(),
+  };
+}
 
 type FamilyFilter = "all" | "reformer" | "mat";
 
 export default function SchedulePage() {
-  const [day, setDay] = useState(TODAY);
+  const dates = useMemo(() => {
+    const today = new Date();
+    return Array.from({ length: DAYS_AHEAD }, (_, i) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      return toISODate(d);
+    });
+  }, []);
+
+  const [selectedDate, setSelectedDate] = useState(dates[0]);
   const [filter, setFilter] = useState<FamilyFilter>("all");
-  const [classes, setClasses] = useState<ScheduledClass[]>([]);
+  const [occurrences, setOccurrences] = useState<OccurrenceView[]>([]);
   const [instructors, setInstructors] = useState<Instructor[]>([]);
+  const [signedIn, setSignedIn] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
-    Promise.all([fetchClasses(), fetchInstructors()])
-      .then(([classesData, instructorsData]) => {
-        if (cancelled) return;
-        setClasses(classesData);
-        setInstructors(instructorsData);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        setError(err instanceof Error ? err.message : "Failed to load the schedule.");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
+    load();
   }, []);
+
+  async function load() {
+    setLoading(true);
+    setError(null);
+    try {
+      await ensureOccurrences();
+      const [occurrenceData, instructorData, client] = await Promise.all([
+        fetchOccurrences(dates[0], dates[dates.length - 1]),
+        fetchInstructors(),
+        fetchMyClient(),
+      ]);
+      setOccurrences(occurrenceData);
+      setInstructors(instructorData);
+      setSignedIn(client !== null);
+    } catch (err) {
+      setError(getErrorMessage(err, "Failed to load the schedule."));
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const instructorName = useMemo(
     () => new Map(instructors.map((i) => [i.id, firstName(i.name)])),
@@ -51,19 +83,64 @@ export default function SchedulePage() {
 
   const items = useMemo(
     () =>
-      classes
-        .filter((c) => c.day === day && (filter === "all" || c.family === filter))
+      occurrences
+        .filter((o) => o.date === selectedDate && (filter === "all" || o.family === filter))
         .sort((a, b) => a.time.localeCompare(b.time)),
-    [classes, day, filter],
+    [occurrences, selectedDate, filter],
   );
+
+  async function handleBook(occurrenceId: string) {
+    setBusyId(occurrenceId);
+    setError(null);
+    try {
+      await bookClass(occurrenceId);
+      const [occurrenceData, client] = await Promise.all([
+        fetchOccurrences(dates[0], dates[dates.length - 1]),
+        fetchMyClient(),
+      ]);
+      setOccurrences(occurrenceData);
+      setSignedIn(client !== null);
+    } catch (err) {
+      setError(getErrorMessage(err, "Failed to book this class."));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handleCancel(bookingId: string, occurrenceId: string) {
+    if (!confirm("Cancel this booking?")) return;
+    setBusyId(occurrenceId);
+    setError(null);
+    try {
+      await cancelBooking(bookingId);
+      const occurrenceData = await fetchOccurrences(dates[0], dates[dates.length - 1]);
+      setOccurrences(occurrenceData);
+    } catch (err) {
+      setError(getErrorMessage(err, "Failed to cancel."));
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   return (
     <main className="flex-1 bg-bg">
       <div className="mx-auto max-w-6xl px-7 py-8">
-        <div className="mb-1 flex items-center gap-3">
+        <div className="mb-1 flex items-center justify-between gap-3">
           <Link href="/" className="text-[13px] font-semibold text-muted hover:text-ink">
             &larr; Pure Motion
           </Link>
+          {signedIn ? (
+            <Link href="/account" className="text-[13px] font-semibold text-muted hover:text-ink">
+              My account
+            </Link>
+          ) : (
+            <Link
+              href="/account/login"
+              className="text-[13px] font-semibold text-accent-strong hover:underline"
+            >
+              Sign in
+            </Link>
+          )}
         </div>
         <h1 className="font-display text-[23px] font-bold text-ink">Book a class</h1>
         <p className="mt-1 text-[13px] text-muted">
@@ -76,15 +153,15 @@ export default function SchedulePage() {
           </div>
         )}
 
-        <div className="mt-5 flex flex-wrap gap-1.5">
-          {DAYS.map((label, i) => {
-            const count = classes.filter((c) => c.day === i).length;
-            const active = i === day;
+        <div className="mt-5 flex gap-1.5 overflow-x-auto pb-1">
+          {dates.map((iso, i) => {
+            const { weekday, day } = dateLabel(iso);
+            const active = iso === selectedDate;
             return (
               <button
-                key={label}
-                onClick={() => setDay(i)}
-                className={`min-w-[64px] rounded-[10px] border px-3.5 py-2 text-center text-[12.5px] font-bold transition ${
+                key={iso}
+                onClick={() => setSelectedDate(iso)}
+                className={`min-w-[64px] shrink-0 rounded-[10px] border px-3.5 py-2 text-center text-[12.5px] font-bold transition ${
                   active
                     ? "border-ink bg-ink text-bg"
                     : "border-border bg-surface text-ink-secondary hover:bg-surface-2"
@@ -95,9 +172,9 @@ export default function SchedulePage() {
                     active ? "text-bg/60" : "text-muted"
                   }`}
                 >
-                  {label}
+                  {weekday}
                 </span>
-                {i === TODAY ? "Today" : `${count} cls`}
+                {i === 0 ? "Today" : day}
               </button>
             );
           })}
@@ -132,27 +209,82 @@ export default function SchedulePage() {
             </div>
           ) : items.length === 0 ? (
             <div className="rounded-2xl border border-border bg-surface p-5 text-center text-[13px] text-muted">
-              No {filter === "all" ? "" : `${filter} `}classes scheduled today.
+              No {filter === "all" ? "" : `${filter} `}classes scheduled this day.
             </div>
           ) : (
-            items.map((cls) => {
-              const full = statusFor(cls) === "critical";
+            items.map((occ) => {
+              const full = statusFor({ capacity: occ.capacity, booked: occ.bookedCount }) === "critical";
+              const waitlistFull = occ.waitlistCount >= 2;
+              const busy = busyId === occ.occurrenceId;
+
+              let action;
+              if (occ.myStatus === "booked") {
+                action = (
+                  <button
+                    onClick={() => occ.myBookingId && handleCancel(occ.myBookingId, occ.occurrenceId)}
+                    disabled={busy}
+                    className="ml-2 shrink-0 rounded-[9px] border border-status-critical px-4 py-2 text-[13px] font-bold text-status-critical transition hover:bg-status-critical-soft disabled:opacity-50"
+                  >
+                    {busy ? "Cancelling…" : "Booked · Cancel"}
+                  </button>
+                );
+              } else if (occ.myStatus === "waitlisted") {
+                action = (
+                  <button
+                    onClick={() => occ.myBookingId && handleCancel(occ.myBookingId, occ.occurrenceId)}
+                    disabled={busy}
+                    className="ml-2 shrink-0 rounded-[9px] border border-status-warning px-4 py-2 text-[13px] font-bold text-status-warning transition hover:bg-status-warning-soft disabled:opacity-50"
+                  >
+                    {busy ? "Cancelling…" : "Waitlisted · Cancel"}
+                  </button>
+                );
+              } else if (!signedIn) {
+                action = (
+                  <Link
+                    href="/account/login"
+                    className="ml-2 shrink-0 rounded-[9px] bg-accent-strong px-4 py-2 text-[13px] font-bold text-accent-ink transition hover:brightness-110"
+                  >
+                    Sign in to book
+                  </Link>
+                );
+              } else if (full && waitlistFull) {
+                action = (
+                  <button
+                    disabled
+                    className="ml-2 shrink-0 rounded-[9px] border border-border-strong px-4 py-2 text-[13px] font-bold text-muted opacity-60"
+                  >
+                    Full
+                  </button>
+                );
+              } else {
+                action = (
+                  <button
+                    onClick={() => handleBook(occ.occurrenceId)}
+                    disabled={busy}
+                    className={`ml-2 shrink-0 rounded-[9px] px-4 py-2 text-[13px] font-bold transition disabled:opacity-50 ${
+                      full
+                        ? "border border-border-strong text-ink hover:bg-surface-2"
+                        : "bg-accent-strong text-accent-ink hover:brightness-110"
+                    }`}
+                  >
+                    {busy ? "Booking…" : full ? "Join waitlist" : "Book"}
+                  </button>
+                );
+              }
+
               return (
                 <ClassCard
-                  key={cls.id}
-                  cls={cls}
-                  instructorName={instructorName.get(cls.instructor) ?? cls.instructor}
-                  action={
-                    <button
-                      className={`ml-2 shrink-0 rounded-[9px] px-4 py-2 text-[13px] font-bold transition ${
-                        full
-                          ? "border border-border-strong text-ink hover:bg-surface-2"
-                          : "bg-accent-strong text-accent-ink hover:brightness-110"
-                      }`}
-                    >
-                      {full ? "Join waitlist" : "Book"}
-                    </button>
-                  }
+                  key={occ.occurrenceId}
+                  cls={{
+                    time: occ.time,
+                    name: occ.name,
+                    family: occ.family,
+                    ladiesOnly: occ.ladiesOnly,
+                    capacity: occ.capacity,
+                    booked: occ.bookedCount,
+                  }}
+                  instructorName={instructorName.get(occ.instructor) ?? occ.instructor}
+                  action={action}
                 />
               );
             })
