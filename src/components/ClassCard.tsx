@@ -1,10 +1,5 @@
 import type { ReactNode } from "react";
-import {
-  instructors,
-  statusFor,
-  statusLabel,
-  type ScheduledClass,
-} from "@/lib/schedule-data";
+import { statusFor, statusLabel, type ScheduledClass } from "@/lib/schedule-data";
 
 const familyColor: Record<string, string> = {
   reformer: "var(--family-reformer)",
@@ -30,9 +25,11 @@ const statusBarClass: Record<string, string> = {
 
 export function ClassCard({
   cls,
+  instructorName,
   action,
 }: {
   cls: ScheduledClass;
+  instructorName: string;
   action?: ReactNode;
 }) {
   const status = statusFor(cls);
@@ -50,7 +47,7 @@ export function ClassCard({
       <div className="min-w-0 flex-1">
         <div className="text-[14.5px] font-bold text-ink">{cls.name}</div>
         <div className="mt-0.5 text-[12px] text-muted">
-          {instructors[cls.instructor]} &middot; {familyLabel[cls.family]}
+          {instructorName} &middot; {familyLabel[cls.family]}
         </div>
       </div>
       <div className="w-[150px] shrink-0">
