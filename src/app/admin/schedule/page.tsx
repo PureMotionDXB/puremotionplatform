@@ -211,17 +211,6 @@ export default function AdminSchedulePage() {
                   Restrict to female clients
                 </label>
               </Field>
-              <Field label="Credits per booking">
-                <input
-                  type="number"
-                  min={1}
-                  className="field-input"
-                  value={form.creditCost}
-                  onChange={(e) =>
-                    setForm({ ...form, creditCost: Number(e.target.value) || 1 })
-                  }
-                />
-              </Field>
               <Field label="Day">
                 <select
                   className="field-input"
@@ -347,7 +336,6 @@ export default function AdminSchedulePage() {
                           <th className="px-3 py-2.5">Time</th>
                           <th className="px-3 py-2.5">Class</th>
                           <th className="px-3 py-2.5">Category</th>
-                          <th className="px-3 py-2.5">Credits</th>
                           <th className="px-3 py-2.5">Instructor</th>
                           <th className="px-3 py-2.5">Capacity</th>
                           <th className="px-3 py-2.5"></th>
@@ -372,7 +360,6 @@ export default function AdminSchedulePage() {
                                 {familyLabel[c.family]}
                               </span>
                             </td>
-                            <td className="px-3 py-2.5 font-mono">{c.creditCost}</td>
                             <td className="px-3 py-2.5 text-ink-secondary">
                               {instructorRoster.find((i) => i.id === c.instructor)?.name ??
                                 c.instructor}
