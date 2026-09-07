@@ -1,26 +1,146 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  color-scheme: light;
+  --bg: #f1e9de;
+  --bg-plane: #e8dccc;
+  --surface: #ffffff;
+  --surface-2: #f8f1e8;
+  --ink: #362119;
+  --ink-secondary: #6e574b;
+  --muted: #9c8a7e;
+  --border: rgba(54, 33, 25, 0.11);
+  --border-strong: rgba(54, 33, 25, 0.19);
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --accent: #f2a065;
+  --accent-strong: #c97a3e;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(242, 160, 101, 0.16);
+
+  --secondary: #7a6255;
+  --secondary-strong: #5e4c41;
+  --secondary-soft: rgba(122, 98, 85, 0.14);
+
+  --status-good: #1e8e3e;
+  --status-good-soft: rgba(30, 142, 62, 0.12);
+  --status-warning: #a87f0c;
+  --status-warning-soft: rgba(168, 127, 12, 0.13);
+  --status-critical: #c4443b;
+  --status-critical-soft: rgba(196, 68, 59, 0.12);
+
+  --family-reformer: #2a6fc9;
+  --family-mat: #1ba679;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #18120d;
+    --bg-plane: #100c09;
+    --surface: #241c16;
+    --surface-2: #2d241c;
+    --ink: #f3e7da;
+    --ink-secondary: #cbb8a9;
+    --muted: #8f7c6e;
+    --border: rgba(243, 231, 218, 0.1);
+    --border-strong: rgba(243, 231, 218, 0.18);
+
+    --accent: #f5b583;
+    --accent-strong: #e8935a;
+    --accent-ink: #2b1b10;
+    --accent-soft: rgba(245, 181, 131, 0.18);
+
+    --secondary: #9c8475;
+    --secondary-strong: #b8a090;
+    --secondary-soft: rgba(156, 132, 117, 0.18);
+
+    --status-good: #37b75b;
+    --status-good-soft: rgba(55, 183, 91, 0.15);
+    --status-warning: #d9a62e;
+    --status-warning-soft: rgba(217, 166, 46, 0.18);
+    --status-critical: #e06a61;
+    --status-critical-soft: rgba(224, 106, 97, 0.16);
+
+    --family-reformer: #5c93de;
+    --family-mat: #3fc495;
   }
 }
 
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #18120d;
+  --bg-plane: #100c09;
+  --surface: #241c16;
+  --surface-2: #2d241c;
+  --ink: #f3e7da;
+  --ink-secondary: #cbb8a9;
+  --muted: #8f7c6e;
+  --border: rgba(243, 231, 218, 0.1);
+  --border-strong: rgba(243, 231, 218, 0.18);
+
+  --accent: #f5b583;
+  --accent-strong: #e8935a;
+  --accent-ink: #2b1b10;
+  --accent-soft: rgba(245, 181, 131, 0.18);
+
+  --secondary: #9c8475;
+  --secondary-strong: #b8a090;
+  --secondary-soft: rgba(156, 132, 117, 0.18);
+
+  --status-good: #37b75b;
+  --status-good-soft: rgba(55, 183, 91, 0.15);
+  --status-warning: #d9a62e;
+  --status-warning-soft: rgba(217, 166, 46, 0.18);
+  --status-critical: #e06a61;
+  --status-critical-soft: rgba(224, 106, 97, 0.16);
+
+  --family-reformer: #5c93de;
+  --family-mat: #3fc495;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-plane: var(--bg-plane);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-strong: var(--secondary-strong);
+  --color-secondary-soft: var(--secondary-soft);
+
+  --color-status-good: var(--status-good);
+  --color-status-good-soft: var(--status-good-soft);
+  --color-status-warning: var(--status-warning);
+  --color-status-warning-soft: var(--status-warning-soft);
+  --color-status-critical: var(--status-critical);
+  --color-status-critical-soft: var(--status-critical-soft);
+
+  --color-family-reformer: var(--family-reformer);
+  --color-family-mat: var(--family-mat);
+
+  --font-display: var(--font-bricolage);
+  --font-sans: var(--font-karla);
+  --font-mono: var(--font-plex-mono);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-karla), system-ui, sans-serif;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-bricolage), system-ui, sans-serif;
+  text-wrap: balance;
+  letter-spacing: -0.01em;
 }
