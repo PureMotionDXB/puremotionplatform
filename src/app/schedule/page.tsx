@@ -3,7 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ClassCard } from "@/components/ClassCard";
-import { DAYS, statusFor, type Instructor, type ScheduledClass } from "@/lib/schedule-data";
+import {
+  DAYS,
+  firstName,
+  statusFor,
+  type Instructor,
+  type ScheduledClass,
+} from "@/lib/schedule-data";
 import { fetchClasses, fetchInstructors } from "@/lib/schedule-db";
 
 const TODAY = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
@@ -39,7 +45,7 @@ export default function SchedulePage() {
   }, []);
 
   const instructorName = useMemo(
-    () => new Map(instructors.map((i) => [i.id, i.name])),
+    () => new Map(instructors.map((i) => [i.id, firstName(i.name)])),
     [instructors],
   );
 

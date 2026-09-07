@@ -32,6 +32,10 @@ export function emptyClass(defaultInstructorId = ""): Omit<ScheduledClass, "id">
   };
 }
 
+export function firstName(fullName: string): string {
+  return fullName.trim().split(/\s+/)[0] ?? fullName;
+}
+
 export type SpotStatus = "good" | "warning" | "critical";
 
 export function statusFor(cls: ScheduledClass): SpotStatus {
