@@ -11,6 +11,7 @@ create table if not exists classes (
   time text not null,
   name text not null,
   family text not null check (family in ('reformer', 'mat')),
+  ladies_only boolean not null default false,
   credit_cost int not null default 1,
   instructor_id text references instructors(id),
   capacity int not null default 10,

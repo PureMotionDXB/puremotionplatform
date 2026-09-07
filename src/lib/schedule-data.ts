@@ -6,6 +6,7 @@ export interface ScheduledClass {
   time: string;
   name: string;
   family: ClassFamily; // "Category" — which credit pool this class draws from
+  ladiesOnly: boolean;
   creditCost: number; // "Pricing category" — credits a single booking consumes (usually 1)
   instructor: string; // instructor id, see the instructors table
   capacity: number;
@@ -25,6 +26,7 @@ export function emptyClass(defaultInstructorId = ""): Omit<ScheduledClass, "id">
     time: "08:00",
     name: "",
     family: "reformer",
+    ladiesOnly: false,
     creditCost: 1,
     instructor: defaultInstructorId,
     capacity: 10,

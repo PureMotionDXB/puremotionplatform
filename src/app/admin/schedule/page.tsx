@@ -183,6 +183,16 @@ export default function AdminSchedulePage() {
                   <option value="mat">Mat</option>
                 </select>
               </Field>
+              <Field label="Ladies only">
+                <label className="flex h-[38px] items-center gap-2 text-[13px] text-ink">
+                  <input
+                    type="checkbox"
+                    checked={form.ladiesOnly}
+                    onChange={(e) => setForm({ ...form, ladiesOnly: e.target.checked })}
+                  />
+                  Restrict to female clients
+                </label>
+              </Field>
               <Field label="Credits per booking">
                 <input
                   type="number"
@@ -327,7 +337,14 @@ export default function AdminSchedulePage() {
                         {group.items.map((c) => (
                           <tr key={c.id} className="border-b border-border last:border-none">
                             <td className="px-3 py-2.5 font-mono">{c.time}</td>
-                            <td className="px-3 py-2.5 font-semibold">{c.name}</td>
+                            <td className="px-3 py-2.5 font-semibold">
+                              {c.name}
+                              {c.ladiesOnly && (
+                                <span className="ml-2 rounded-full bg-secondary-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-secondary-strong">
+                                  Ladies only
+                                </span>
+                              )}
+                            </td>
                             <td className="px-3 py-2.5">
                               <span
                                 className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${familyBadge[c.family]}`}

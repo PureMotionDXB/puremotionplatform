@@ -45,9 +45,17 @@ export function ClassCard({
         style={{ background: familyColor[cls.family] }}
       />
       <div className="min-w-0 flex-1">
-        <div className="text-[14.5px] font-bold text-ink">{cls.name}</div>
+        <div className="flex items-center gap-2">
+          <div className="text-[14.5px] font-bold text-ink">{cls.name}</div>
+          {cls.ladiesOnly && (
+            <span className="shrink-0 rounded-full bg-secondary-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-secondary-strong">
+              Ladies only
+            </span>
+          )}
+        </div>
         <div className="mt-0.5 text-[12px] text-muted">
-          {instructorName} &middot; {familyLabel[cls.family]}
+          {instructorName ? `${instructorName} · ` : ""}
+          {familyLabel[cls.family]}
         </div>
       </div>
       <div className="w-[150px] shrink-0">

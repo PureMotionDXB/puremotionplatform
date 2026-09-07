@@ -7,6 +7,7 @@ interface ClassRow {
   time: string;
   name: string;
   family: "reformer" | "mat";
+  ladies_only: boolean;
   credit_cost: number;
   instructor_id: string;
   capacity: number;
@@ -20,6 +21,7 @@ function fromRow(row: ClassRow): ScheduledClass {
     time: row.time,
     name: row.name,
     family: row.family,
+    ladiesOnly: row.ladies_only,
     creditCost: row.credit_cost,
     instructor: row.instructor_id,
     capacity: row.capacity,
@@ -33,6 +35,7 @@ function toRow(cls: Omit<ScheduledClass, "id">) {
     time: cls.time,
     name: cls.name,
     family: cls.family,
+    ladies_only: cls.ladiesOnly,
     credit_cost: cls.creditCost,
     instructor_id: cls.instructor,
     capacity: cls.capacity,
