@@ -1,0 +1,136 @@
+import { supabase } from "./supabase";
+import type { ClassFamily } from "./schedule-data";
+
+export interface AdminClient {
+  id: string;
+  fullName: string;
+  phone: string | null;
+  gender: string;
+  reformerCredits: number;
+  matCredits: number;
+  createdAt: string;
+}
+
+interface AdminClientRow {
+  id: string;
+  full_name: string;
+  phone: string | null;
+  gender: string;
+  reformer_credits: number;
+  mat_credits: number;
+  created_at: string;
+}
+
+export async function fetchAllClients(): Promise<AdminClient[]> {
+  const { data, error } = await supabase
+    .from("clients")
+    .select("*")
+    .order("full_name", { ascending: true });
+  if (error) throw error;
+  return (data as AdminClientRow[]).map((row) => ({
+    id: row.id,
+    fullName: row.full_name,
+    phone: row.phone,
+    gender: row.gender,
+    reformerCredits: row.reformer_credits,
+    matCredits: row.mat_credits,
+    createdAt: row.created_at,
+  }));
+}
+
+export async function adjustCredits(
+  clientId: string,
+  family: "reformer" | "mat",
+  delta: number,
+  reason: string,
+): Promise<void> {
+  const { error } = await supabase.rpc("adjust_credits", {
+    p_client_id: clientId,
+    p_family: family,
+    p_delta: delta,
+    p_reason: reason || null,
+  });
+  if (error) throw error;
+}
+
+export interface RosterBooking {
+  id: string;
+  status: "booked" | "waitlisted";
+  clientName: string;
+  clientPhone: string | null;
+}
+
+export interface RosterEntry {
+  occurrenceId: string;
+  time: string;
+  name: string;
+  family: ClassFamily;
+  ladiesOnly: boolean;
+  capacity: number;
+  instructor: string;
+  bookings: RosterBooking[];
+}
+
+interface RosterOccurrenceRow {
+  id: string;
+  classes: {
+    time: string;
+    name: string;
+    family: ClassFamily;
+    ladies_only: boolean;
+    capacity: number;
+    instructor_id: string;
+  };
+}
+
+interface RosterBookingRow {
+  id: string;
+  occurrence_id: string;
+  status: "booked" | "waitlisted";
+  clients: {
+    full_name: string;
+    phone: string | null;
+  };
+}
+
+export async function fetchRoster(date: string): Promise<RosterEntry[]> {
+  const { data: occurrenceRows, error } = await supabase
+    .from("class_occurrences")
+    .select("id, classes(time, name, family, ladies_only, capacity, instructor_id)")
+    .eq("date", date);
+  if (error) throw error;
+
+  const occurrences = (occurrenceRows ?? []) as unknown as RosterOccurrenceRow[];
+  const occurrenceIds = occurrences.map((o) => o.id);
+
+  let bookingRows: RosterBookingRow[] = [];
+  if (occurrenceIds.length > 0) {
+    const { data, error: bookingsError } = await supabase
+      .from("bookings")
+      .select("id, occurrence_id, status, clients(full_name, phone)")
+      .in("occurrence_id", occurrenceIds)
+      .in("status", ["booked", "waitlisted"]);
+    if (bookingsError) throw bookingsError;
+    bookingRows = (data ?? []) as unknown as RosterBookingRow[];
+  }
+
+  return occurrences
+    .map((occ) => ({
+      occurrenceId: occ.id,
+      time: occ.classes.time,
+      name: occ.classes.name,
+      family: occ.classes.family,
+      ladiesOnly: occ.classes.ladies_only,
+      capacity: occ.classes.capacity,
+      instructor: occ.classes.instructor_id,
+      bookings: bookingRows
+        .filter((b) => b.occurrence_id === occ.id)
+        .map((b) => ({
+          id: b.id,
+          status: b.status,
+          clientName: b.clients.full_name,
+          clientPhone: b.clients.phone,
+        })),
+    }))
+    .sort((a, b) => a.time.localeCompare(b.time));
+}
