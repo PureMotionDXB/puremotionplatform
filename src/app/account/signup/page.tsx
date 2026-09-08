@@ -160,13 +160,13 @@ export default function SignupPage() {
             </span>
             <div className="flex gap-2">
               <select
-                className="field-input w-[130px] shrink-0"
+                className="field-input w-[108px] shrink-0"
                 value={countryDial}
                 onChange={(e) => setCountryDial(e.target.value)}
               >
                 {countryCodes.map((c) => (
                   <option key={c.iso2} value={c.dial}>
-                    {c.name} ({c.dial})
+                    {c.dial} {c.name}
                   </option>
                 ))}
               </select>
@@ -174,7 +174,7 @@ export default function SignupPage() {
                 type="tel"
                 required
                 placeholder="50 123 4567"
-                className="field-input"
+                className="field-input min-w-0 flex-1"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
               />
@@ -230,6 +230,7 @@ export default function SignupPage() {
           <label className="flex items-start gap-2 text-[12.5px] text-ink">
             <input
               type="checkbox"
+              required
               className="mt-0.5"
               checked={ageConfirmed}
               onChange={(e) => setAgeConfirmed(e.target.checked)}
@@ -240,6 +241,7 @@ export default function SignupPage() {
           <label className="flex items-start gap-2 text-[12.5px] text-ink">
             <input
               type="checkbox"
+              required
               className="mt-0.5"
               checked={liabilityAccepted}
               onChange={(e) => setLiabilityAccepted(e.target.checked)}
