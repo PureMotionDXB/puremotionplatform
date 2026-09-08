@@ -223,7 +223,7 @@ export default function SchedulePage() {
                   <button
                     onClick={() => occ.myBookingId && handleCancel(occ.myBookingId, occ.occurrenceId)}
                     disabled={busy}
-                    className="ml-2 shrink-0 rounded-[9px] border border-status-critical px-4 py-2 text-[13px] font-bold text-status-critical transition hover:bg-status-critical-soft disabled:opacity-50"
+                    className="w-full shrink-0 rounded-[9px] border border-status-critical px-4 py-2 text-[13px] font-bold text-status-critical transition hover:bg-status-critical-soft disabled:opacity-50 sm:w-auto"
                   >
                     {busy ? "Cancelling…" : "Booked · Cancel"}
                   </button>
@@ -233,7 +233,7 @@ export default function SchedulePage() {
                   <button
                     onClick={() => occ.myBookingId && handleCancel(occ.myBookingId, occ.occurrenceId)}
                     disabled={busy}
-                    className="ml-2 shrink-0 rounded-[9px] border border-status-warning px-4 py-2 text-[13px] font-bold text-status-warning transition hover:bg-status-warning-soft disabled:opacity-50"
+                    className="w-full shrink-0 rounded-[9px] border border-status-warning px-4 py-2 text-[13px] font-bold text-status-warning transition hover:bg-status-warning-soft disabled:opacity-50 sm:w-auto"
                   >
                     {busy ? "Cancelling…" : "Waitlisted · Cancel"}
                   </button>
@@ -242,7 +242,7 @@ export default function SchedulePage() {
                 action = (
                   <Link
                     href="/account/login"
-                    className="ml-2 shrink-0 rounded-[9px] bg-accent-strong px-4 py-2 text-[13px] font-bold text-accent-ink transition hover:brightness-110"
+                    className="w-full shrink-0 rounded-[9px] bg-accent-strong px-4 py-2 text-center text-[13px] font-bold text-accent-ink transition hover:brightness-110 sm:w-auto"
                   >
                     Sign in to book
                   </Link>
@@ -251,7 +251,7 @@ export default function SchedulePage() {
                 action = (
                   <button
                     disabled
-                    className="ml-2 shrink-0 rounded-[9px] border border-border-strong px-4 py-2 text-[13px] font-bold text-muted opacity-60"
+                    className="w-full shrink-0 rounded-[9px] border border-border-strong px-4 py-2 text-[13px] font-bold text-muted opacity-60 sm:w-auto"
                   >
                     Full
                   </button>
@@ -261,7 +261,7 @@ export default function SchedulePage() {
                   <button
                     onClick={() => handleBook(occ.occurrenceId)}
                     disabled={busy}
-                    className={`ml-2 shrink-0 rounded-[9px] px-4 py-2 text-[13px] font-bold transition disabled:opacity-50 ${
+                    className={`w-full shrink-0 rounded-[9px] px-4 py-2 text-[13px] font-bold transition disabled:opacity-50 sm:w-auto ${
                       full
                         ? "border border-border-strong text-ink hover:bg-surface-2"
                         : "bg-accent-strong text-accent-ink hover:brightness-110"

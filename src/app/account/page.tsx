@@ -145,9 +145,9 @@ export default function AccountPage() {
             upcoming.map((b) => (
               <div
                 key={b.id}
-                className="flex items-center justify-between rounded-2xl border border-border bg-surface p-3.5"
+                className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface p-3.5"
               >
-                <div>
+                <div className="min-w-0 flex-1">
                   <div className="text-[14px] font-bold text-ink">{b.name}</div>
                   <div className="mt-0.5 text-[12px] text-muted">
                     {formatDate(b.date)} &middot; {b.time} &middot; {familyLabel[b.family]}
@@ -161,7 +161,7 @@ export default function AccountPage() {
                 <button
                   onClick={() => handleCancel(b.id)}
                   disabled={cancellingId === b.id}
-                  className="text-[12px] font-bold text-status-critical hover:underline disabled:opacity-50"
+                  className="shrink-0 text-[12px] font-bold text-status-critical hover:underline disabled:opacity-50"
                 >
                   {cancellingId === b.id ? "Cancelling…" : "Cancel"}
                 </button>
@@ -178,15 +178,15 @@ export default function AccountPage() {
             past.map((b) => (
               <div
                 key={b.id}
-                className="flex items-center justify-between rounded-2xl border border-border bg-surface-2 p-3.5"
+                className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface-2 p-3.5"
               >
-                <div>
+                <div className="min-w-0 flex-1">
                   <div className="text-[14px] font-semibold text-ink-secondary">{b.name}</div>
                   <div className="mt-0.5 text-[12px] text-muted">
                     {formatDate(b.date)} &middot; {b.time}
                   </div>
                 </div>
-                <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
+                <span className="shrink-0 text-[11px] font-bold uppercase tracking-wide text-muted">
                   {b.status}
                 </span>
               </div>

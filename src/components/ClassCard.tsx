@@ -45,29 +45,31 @@ export function ClassCard({
   const pct = Math.round((cls.booked / cls.capacity) * 100);
 
   return (
-    <div className="flex items-center gap-4 rounded-2xl border border-border bg-surface p-3.5">
-      <div className="w-[58px] shrink-0 font-mono text-[14.5px] font-semibold text-ink">
-        {cls.time}
-      </div>
-      <span
-        className="h-2 w-2 shrink-0 rounded-full"
-        style={{ background: familyColor[cls.family] }}
-      />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <div className="text-[14.5px] font-bold text-ink">{cls.name}</div>
-          {cls.ladiesOnly && (
-            <span className="shrink-0 rounded-full bg-secondary-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-secondary-strong">
-              Ladies only
-            </span>
-          )}
+    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-3.5 sm:flex-row sm:items-center sm:gap-4">
+      <div className="flex min-w-0 items-center gap-3 sm:flex-1">
+        <div className="w-[58px] shrink-0 font-mono text-[14.5px] font-semibold text-ink">
+          {cls.time}
         </div>
-        <div className="mt-0.5 text-[12px] text-muted">
-          {instructorName ? `${instructorName} · ` : ""}
-          {familyLabel[cls.family]}
+        <span
+          className="h-2 w-2 shrink-0 rounded-full"
+          style={{ background: familyColor[cls.family] }}
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <div className="text-[14.5px] font-bold text-ink">{cls.name}</div>
+            {cls.ladiesOnly && (
+              <span className="shrink-0 rounded-full bg-secondary-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-secondary-strong">
+                Ladies only
+              </span>
+            )}
+          </div>
+          <div className="mt-0.5 text-[12px] text-muted">
+            {instructorName ? `${instructorName} · ` : ""}
+            {familyLabel[cls.family]}
+          </div>
         </div>
       </div>
-      <div className="w-[150px] shrink-0">
+      <div className="w-full sm:w-[150px] sm:shrink-0">
         <div className="mb-1.5 flex justify-between text-[11.5px]">
           <span
             className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${statusChipClass[status]}`}
