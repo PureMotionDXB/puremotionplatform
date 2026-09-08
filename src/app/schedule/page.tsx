@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ClassCard } from "@/components/ClassCard";
 import { firstName, getErrorMessage, statusFor, type Instructor } from "@/lib/schedule-data";
 import { fetchInstructors } from "@/lib/schedule-db";
@@ -34,6 +35,17 @@ function dateLabel(iso: string) {
 type FamilyFilter = "all" | "reformer" | "mat";
 
 export default function SchedulePage() {
+  return (
+    <Suspense fallback={null}>
+      <ScheduleContent />
+    </Suspense>
+  );
+}
+
+function ScheduleContent() {
+  const searchParams = useSearchParams();
+  const initialFamily = searchParams.get("family");
+
   const dates = useMemo(() => {
     const today = new Date();
     return Array.from({ length: DAYS_AHEAD }, (_, i) => {
@@ -44,7 +56,9 @@ export default function SchedulePage() {
   }, []);
 
   const [selectedDate, setSelectedDate] = useState(dates[0]);
-  const [filter, setFilter] = useState<FamilyFilter>("all");
+  const [filter, setFilter] = useState<FamilyFilter>(
+    initialFamily === "reformer" || initialFamily === "mat" ? initialFamily : "all",
+  );
   const [occurrences, setOccurrences] = useState<OccurrenceView[]>([]);
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [signedIn, setSignedIn] = useState(false);
