@@ -3,10 +3,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { firstName, getErrorMessage, type Instructor } from "@/lib/schedule-data";
 import { fetchInstructors } from "@/lib/schedule-db";
-import { fetchMyStaffInfo, fetchRoster, type RosterEntry, type StaffInfo } from "@/lib/admin-db";
+import {
+  fetchMyStaffInfo,
+  fetchRoster,
+  setAttendance,
+  type RosterEntry,
+  type StaffInfo,
+} from "@/lib/admin-db";
 
 const familyLabel: Record<string, string> = { reformer: "Reformer", mat: "Mat" };
-const statusLabel: Record<string, string> = { booked: "Booked", waitlisted: "Waitlisted" };
+const statusLabel: Record<string, string> = {
+  booked: "Booked",
+  waitlisted: "Waitlisted",
+  attended: "Attended",
+};
 
 function toISODate(d: Date): string {
   const y = d.getFullYear();
@@ -22,6 +32,7 @@ export default function AdminRosterPage() {
   const [staffInfo, setStaffInfo] = useState<StaffInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
     load();
@@ -51,6 +62,19 @@ export default function AdminRosterPage() {
   }
 
   const isInstructor = staffInfo?.role === "instructor";
+
+  async function toggleAttendance(bookingId: string, attended: boolean) {
+    setBusyId(bookingId);
+    setError(null);
+    try {
+      await setAttendance(bookingId, attended);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err, "Failed to update attendance."));
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   const instructorName = useMemo(
     () => new Map(instructors.map((i) => [i.id, firstName(i.name)])),
@@ -112,7 +136,11 @@ export default function AdminRosterPage() {
                     </div>
                   </div>
                   <span className="font-mono text-[13px] font-semibold text-ink-secondary">
-                    {entry.bookings.filter((b) => b.status === "booked").length}/{entry.capacity}
+                    {
+                      entry.bookings.filter((b) => b.status === "booked" || b.status === "attended")
+                        .length
+                    }
+                    /{entry.capacity}
                   </span>
                 </div>
 
@@ -126,6 +154,7 @@ export default function AdminRosterPage() {
                           <th className="px-3 py-2">Client</th>
                           <th className="px-3 py-2">Phone</th>
                           <th className="px-3 py-2">Status</th>
+                          <th className="px-3 py-2"></th>
                         </tr>
                       </thead>
                       <tbody>
@@ -140,11 +169,30 @@ export default function AdminRosterPage() {
                                 className={
                                   b.status === "waitlisted"
                                     ? "font-bold text-status-warning"
-                                    : "font-bold text-status-good"
+                                    : b.status === "attended"
+                                      ? "font-bold text-family-mat"
+                                      : "font-bold text-status-good"
                                 }
                               >
                                 {statusLabel[b.status]}
                               </span>
+                            </td>
+                            <td className="px-3 py-2 text-right">
+                              {b.status !== "waitlisted" && (
+                                <button
+                                  onClick={() =>
+                                    toggleAttendance(b.id, b.status !== "attended")
+                                  }
+                                  disabled={busyId === b.id}
+                                  className="text-[11.5px] font-bold text-accent-strong hover:underline disabled:opacity-50"
+                                >
+                                  {busyId === b.id
+                                    ? "…"
+                                    : b.status === "attended"
+                                      ? "Undo check-in"
+                                      : "Check in"}
+                                </button>
+                              )}
                             </td>
                           </tr>
                         ))}

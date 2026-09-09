@@ -75,7 +75,7 @@ export async function adjustCredits(
 
 export interface RosterBooking {
   id: string;
-  status: "booked" | "waitlisted";
+  status: "booked" | "waitlisted" | "attended";
   clientName: string;
   clientPhone: string | null;
 }
@@ -106,7 +106,7 @@ interface RosterOccurrenceRow {
 interface RosterBookingRow {
   id: string;
   occurrence_id: string;
-  status: "booked" | "waitlisted";
+  status: "booked" | "waitlisted" | "attended";
   clients: {
     full_name: string;
     phone: string | null;
@@ -129,7 +129,7 @@ export async function fetchRoster(date: string): Promise<RosterEntry[]> {
       .from("bookings")
       .select("id, occurrence_id, status, clients(full_name, phone)")
       .in("occurrence_id", occurrenceIds)
-      .in("status", ["booked", "waitlisted"]);
+      .in("status", ["booked", "waitlisted", "attended"]);
     if (bookingsError) throw bookingsError;
     bookingRows = (data ?? []) as unknown as RosterBookingRow[];
   }
@@ -153,4 +153,12 @@ export async function fetchRoster(date: string): Promise<RosterEntry[]> {
         })),
     }))
     .sort((a, b) => a.time.localeCompare(b.time));
+}
+
+export async function setAttendance(bookingId: string, attended: boolean): Promise<void> {
+  const { error } = await supabase.rpc("set_attendance", {
+    p_booking_id: bookingId,
+    p_attended: attended,
+  });
+  if (error) throw error;
 }
