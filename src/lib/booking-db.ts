@@ -226,7 +226,7 @@ export async function fetchMyClient(): Promise<ClientProfile | null> {
 
 export interface MyBooking {
   id: string;
-  status: "booked" | "waitlisted" | "cancelled" | "attended";
+  status: "booked" | "waitlisted" | "cancelled" | "attended" | "no_show";
   date: string;
   time: string;
   name: string;
@@ -235,7 +235,7 @@ export interface MyBooking {
 
 interface MyBookingRow {
   id: string;
-  status: "booked" | "waitlisted" | "cancelled" | "attended";
+  status: "booked" | "waitlisted" | "cancelled" | "attended" | "no_show";
   class_occurrences: {
     date: string;
     classes: {
@@ -265,5 +265,36 @@ export async function fetchMyBookings(): Promise<MyBooking[]> {
     time: row.class_occurrences.classes.time,
     name: row.class_occurrences.classes.name,
     family: row.class_occurrences.classes.family,
+  }));
+}
+
+export interface MyFee {
+  id: string;
+  reason: "no_show" | "late_cancel";
+  amountAed: number;
+}
+
+interface MyFeeRow {
+  id: string;
+  reason: "no_show" | "late_cancel";
+  amount_aed: number;
+}
+
+export async function fetchMyFees(): Promise<MyFee[]> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data, error } = await supabase
+    .from("no_show_fees")
+    .select("id, reason, amount_aed")
+    .eq("client_id", user.id)
+    .eq("collected", false)
+    .eq("waived", false);
+  if (error) throw error;
+  return (data as MyFeeRow[]).map((r) => ({
+    id: r.id,
+    reason: r.reason,
+    amountAed: r.amount_aed,
   }));
 }

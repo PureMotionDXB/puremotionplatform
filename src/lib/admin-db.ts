@@ -75,7 +75,7 @@ export async function adjustCredits(
 
 export interface RosterBooking {
   id: string;
-  status: "booked" | "waitlisted" | "attended";
+  status: "booked" | "waitlisted" | "attended" | "no_show";
   clientName: string;
   clientPhone: string | null;
 }
@@ -106,7 +106,7 @@ interface RosterOccurrenceRow {
 interface RosterBookingRow {
   id: string;
   occurrence_id: string;
-  status: "booked" | "waitlisted" | "attended";
+  status: "booked" | "waitlisted" | "attended" | "no_show";
   clients: {
     full_name: string;
     phone: string | null;
@@ -129,7 +129,7 @@ export async function fetchRoster(date: string): Promise<RosterEntry[]> {
       .from("bookings")
       .select("id, occurrence_id, status, clients(full_name, phone)")
       .in("occurrence_id", occurrenceIds)
-      .in("status", ["booked", "waitlisted", "attended"]);
+      .in("status", ["booked", "waitlisted", "attended", "no_show"]);
     if (bookingsError) throw bookingsError;
     bookingRows = (data ?? []) as unknown as RosterBookingRow[];
   }
@@ -159,6 +159,61 @@ export async function setAttendance(bookingId: string, attended: boolean): Promi
   const { error } = await supabase.rpc("set_attendance", {
     p_booking_id: bookingId,
     p_attended: attended,
+  });
+  if (error) throw error;
+}
+
+export async function markNoShow(bookingId: string): Promise<void> {
+  const { error } = await supabase.rpc("mark_no_show", { p_booking_id: bookingId });
+  if (error) throw error;
+}
+
+export async function undoNoShow(bookingId: string): Promise<void> {
+  const { error } = await supabase.rpc("undo_no_show", { p_booking_id: bookingId });
+  if (error) throw error;
+}
+
+export interface OutstandingFee {
+  id: string;
+  clientId: string;
+  clientName: string;
+  reason: "no_show" | "late_cancel";
+  amountAed: number;
+  createdAt: string;
+}
+
+interface FeeRow {
+  id: string;
+  client_id: string;
+  reason: "no_show" | "late_cancel";
+  amount_aed: number;
+  created_at: string;
+  clients: { full_name: string };
+}
+
+export async function fetchOutstandingFees(): Promise<OutstandingFee[]> {
+  const { data, error } = await supabase
+    .from("no_show_fees")
+    .select("id, client_id, reason, amount_aed, created_at, clients(full_name)")
+    .eq("collected", false)
+    .eq("waived", false)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  const rows = (data ?? []) as unknown as FeeRow[];
+  return rows.map((r) => ({
+    id: r.id,
+    clientId: r.client_id,
+    clientName: r.clients.full_name,
+    reason: r.reason,
+    amountAed: r.amount_aed,
+    createdAt: r.created_at,
+  }));
+}
+
+export async function resolveFee(feeId: string, collected: boolean): Promise<void> {
+  const { error } = await supabase.rpc("resolve_fee", {
+    p_fee_id: feeId,
+    p_collected: collected,
   });
   if (error) throw error;
 }

@@ -3,13 +3,27 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getErrorMessage } from "@/lib/schedule-data";
-import { adjustCredits, fetchAllClients, fetchMyStaffInfo, type AdminClient } from "@/lib/admin-db";
+import {
+  adjustCredits,
+  fetchAllClients,
+  fetchMyStaffInfo,
+  fetchOutstandingFees,
+  resolveFee,
+  type AdminClient,
+  type OutstandingFee,
+} from "@/lib/admin-db";
 
 type Family = "reformer" | "mat";
+
+const feeReasonLabel: Record<string, string> = {
+  no_show: "No-show",
+  late_cancel: "Late cancellation",
+};
 
 export default function AdminClientsPage() {
   const router = useRouter();
   const [clients, setClients] = useState<AdminClient[]>([]);
+  const [fees, setFees] = useState<OutstandingFee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -18,6 +32,7 @@ export default function AdminClientsPage() {
   const [delta, setDelta] = useState(1);
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
+  const [resolvingFeeId, setResolvingFeeId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMyStaffInfo().then((info) => {
@@ -34,10 +49,24 @@ export default function AdminClientsPage() {
     setError(null);
     try {
       setClients(await fetchAllClients());
+      setFees(await fetchOutstandingFees());
     } catch (err) {
       setError(getErrorMessage(err, "Failed to load clients."));
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleResolveFee(feeId: string, collected: boolean) {
+    setResolvingFeeId(feeId);
+    setError(null);
+    try {
+      await resolveFee(feeId, collected);
+      setFees(await fetchOutstandingFees());
+    } catch (err) {
+      setError(getErrorMessage(err, "Failed to update the fee."));
+    } finally {
+      setResolvingFeeId(null);
     }
   }
 
@@ -84,6 +113,46 @@ export default function AdminClientsPage() {
         {error && (
           <div className="mt-5 rounded-2xl border border-status-critical bg-status-critical-soft p-4 text-[13px] text-status-critical">
             {error}
+          </div>
+        )}
+
+        {fees.length > 0 && (
+          <div className="mt-5 rounded-2xl border border-status-warning bg-status-warning-soft p-4">
+            <h2 className="text-[13px] font-bold text-status-warning">
+              Outstanding fees ({fees.length})
+            </h2>
+            <div className="mt-2.5 flex flex-col gap-2">
+              {fees.map((f) => (
+                <div
+                  key={f.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface p-2.5"
+                >
+                  <div className="text-[12.5px]">
+                    <span className="font-bold text-ink">{f.clientName}</span>
+                    <span className="text-ink-secondary">
+                      {" "}
+                      &mdash; {feeReasonLabel[f.reason]} &middot; AED {f.amountAed}
+                    </span>
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => handleResolveFee(f.id, true)}
+                      disabled={resolvingFeeId === f.id}
+                      className="text-[11.5px] font-bold text-status-good hover:underline disabled:opacity-50"
+                    >
+                      Mark collected
+                    </button>
+                    <button
+                      onClick={() => handleResolveFee(f.id, false)}
+                      disabled={resolvingFeeId === f.id}
+                      className="text-[11.5px] font-bold text-ink-secondary hover:underline disabled:opacity-50"
+                    >
+                      Waive
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

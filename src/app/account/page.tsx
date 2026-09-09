@@ -9,11 +9,22 @@ import {
   cancelBooking,
   fetchMyBookings,
   fetchMyClient,
+  fetchMyFees,
   type ClientProfile,
   type MyBooking,
+  type MyFee,
 } from "@/lib/booking-db";
 
 const familyLabel: Record<string, string> = { reformer: "Reformer", mat: "Mat" };
+const statusLabel: Record<string, string> = {
+  cancelled: "Cancelled",
+  attended: "Attended",
+  no_show: "No-show",
+};
+const feeReasonLabel: Record<string, string> = {
+  no_show: "No-show fee",
+  late_cancel: "Late cancellation fee",
+};
 
 function formatDate(dateStr: string) {
   return new Date(`${dateStr}T00:00:00`).toLocaleDateString(undefined, {
@@ -27,6 +38,7 @@ export default function AccountPage() {
   const router = useRouter();
   const [client, setClient] = useState<ClientProfile | null>(null);
   const [bookings, setBookings] = useState<MyBooking[]>([]);
+  const [fees, setFees] = useState<MyFee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
@@ -46,6 +58,7 @@ export default function AccountPage() {
       }
       setClient(profile);
       setBookings(await fetchMyBookings());
+      setFees(await fetchMyFees());
     } catch (err) {
       setError(getErrorMessage(err, "Failed to load your account."));
     } finally {
@@ -86,7 +99,9 @@ export default function AccountPage() {
   if (!client) return null;
 
   const upcoming = bookings.filter((b) => b.status === "booked" || b.status === "waitlisted");
-  const past = bookings.filter((b) => b.status === "cancelled" || b.status === "attended");
+  const past = bookings.filter(
+    (b) => b.status === "cancelled" || b.status === "attended" || b.status === "no_show",
+  );
 
   return (
     <main className="flex-1 bg-bg">
@@ -110,6 +125,24 @@ export default function AccountPage() {
         {error && (
           <div className="mt-4 rounded-2xl border border-status-critical bg-status-critical-soft p-4 text-[13px] text-status-critical">
             {error}
+          </div>
+        )}
+
+        {fees.length > 0 && (
+          <div className="mt-4 rounded-2xl border border-status-warning bg-status-warning-soft p-4">
+            <div className="text-[12.5px] font-bold text-status-warning">
+              You have {fees.length === 1 ? "an outstanding fee" : `${fees.length} outstanding fees`}
+            </div>
+            <div className="mt-1.5 flex flex-col gap-1">
+              {fees.map((f) => (
+                <div key={f.id} className="text-[12.5px] text-ink-secondary">
+                  {feeReasonLabel[f.reason]} &mdash; AED {f.amountAed}
+                </div>
+              ))}
+            </div>
+            <p className="mt-1.5 text-[11.5px] text-status-warning">
+              Please settle this at the studio.
+            </p>
           </div>
         )}
 
@@ -187,7 +220,7 @@ export default function AccountPage() {
                   </div>
                 </div>
                 <span className="shrink-0 text-[11px] font-bold uppercase tracking-wide text-muted">
-                  {b.status}
+                  {statusLabel[b.status] ?? b.status}
                 </span>
               </div>
             ))

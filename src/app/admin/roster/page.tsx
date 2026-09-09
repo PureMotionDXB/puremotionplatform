@@ -6,7 +6,9 @@ import { fetchInstructors } from "@/lib/schedule-db";
 import {
   fetchMyStaffInfo,
   fetchRoster,
+  markNoShow,
   setAttendance,
+  undoNoShow,
   type RosterEntry,
   type StaffInfo,
 } from "@/lib/admin-db";
@@ -16,6 +18,7 @@ const statusLabel: Record<string, string> = {
   booked: "Booked",
   waitlisted: "Waitlisted",
   attended: "Attended",
+  no_show: "No-show",
 };
 
 function toISODate(d: Date): string {
@@ -71,6 +74,23 @@ export default function AdminRosterPage() {
       await load();
     } catch (err) {
       setError(getErrorMessage(err, "Failed to update attendance."));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function toggleNoShow(bookingId: string, noShow: boolean) {
+    setBusyId(bookingId);
+    setError(null);
+    try {
+      if (noShow) {
+        await markNoShow(bookingId);
+      } else {
+        await undoNoShow(bookingId);
+      }
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err, "Failed to update no-show status."));
     } finally {
       setBusyId(null);
     }
@@ -137,8 +157,9 @@ export default function AdminRosterPage() {
                   </div>
                   <span className="font-mono text-[13px] font-semibold text-ink-secondary">
                     {
-                      entry.bookings.filter((b) => b.status === "booked" || b.status === "attended")
-                        .length
+                      entry.bookings.filter((b) =>
+                        b.status === "booked" || b.status === "attended" || b.status === "no_show",
+                      ).length
                     }
                     /{entry.capacity}
                   </span>
@@ -171,26 +192,49 @@ export default function AdminRosterPage() {
                                     ? "font-bold text-status-warning"
                                     : b.status === "attended"
                                       ? "font-bold text-family-mat"
-                                      : "font-bold text-status-good"
+                                      : b.status === "no_show"
+                                        ? "font-bold text-status-critical"
+                                        : "font-bold text-status-good"
                                 }
                               >
                                 {statusLabel[b.status]}
                               </span>
                             </td>
-                            <td className="px-3 py-2 text-right">
-                              {b.status !== "waitlisted" && (
+                            <td className="px-3 py-2 text-right whitespace-nowrap">
+                              {b.status === "booked" && (
+                                <>
+                                  <button
+                                    onClick={() => toggleAttendance(b.id, true)}
+                                    disabled={busyId === b.id}
+                                    className="mr-3 text-[11.5px] font-bold text-accent-strong hover:underline disabled:opacity-50"
+                                  >
+                                    {busyId === b.id ? "…" : "Check in"}
+                                  </button>
+                                  <button
+                                    onClick={() => toggleNoShow(b.id, true)}
+                                    disabled={busyId === b.id}
+                                    className="text-[11.5px] font-bold text-status-critical hover:underline disabled:opacity-50"
+                                  >
+                                    No-show
+                                  </button>
+                                </>
+                              )}
+                              {b.status === "attended" && (
                                 <button
-                                  onClick={() =>
-                                    toggleAttendance(b.id, b.status !== "attended")
-                                  }
+                                  onClick={() => toggleAttendance(b.id, false)}
                                   disabled={busyId === b.id}
                                   className="text-[11.5px] font-bold text-accent-strong hover:underline disabled:opacity-50"
                                 >
-                                  {busyId === b.id
-                                    ? "…"
-                                    : b.status === "attended"
-                                      ? "Undo check-in"
-                                      : "Check in"}
+                                  {busyId === b.id ? "…" : "Undo check-in"}
+                                </button>
+                              )}
+                              {b.status === "no_show" && (
+                                <button
+                                  onClick={() => toggleNoShow(b.id, false)}
+                                  disabled={busyId === b.id}
+                                  className="text-[11.5px] font-bold text-status-critical hover:underline disabled:opacity-50"
+                                >
+                                  {busyId === b.id ? "…" : "Undo no-show"}
                                 </button>
                               )}
                             </td>
