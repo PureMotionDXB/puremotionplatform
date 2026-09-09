@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Footer } from "@/components/Footer";
 
 export const metadata = {
   title: "Liability Waiver | Pure Motion",
@@ -203,6 +204,7 @@ export default function WaiverPage() {
           </Section>
         </div>
       </div>
+      <Footer />
     </main>
   );
 }

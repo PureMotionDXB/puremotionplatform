@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { Footer } from "@/components/Footer";
 import { getErrorMessage } from "@/lib/schedule-data";
 import {
   cancelBooking,
@@ -227,6 +228,7 @@ export default function AccountPage() {
           )}
         </div>
       </div>
+      <Footer />
     </main>
   );
 }

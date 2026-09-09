@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { Footer } from "@/components/Footer";
 
 const whyPureMotion = [
   {
@@ -59,7 +60,7 @@ export default function Home() {
             <Link href="/pricing" className="text-ink-secondary hover:text-ink">
               Pricing
             </Link>
-            <Link href="/waiver" className="text-ink-secondary hover:text-ink">
+            <Link href="/terms" className="text-ink-secondary hover:text-ink">
               Studio Policy
             </Link>
             {signedIn ? (
@@ -206,38 +207,8 @@ export default function Home() {
           </div>
         </section>
 
-        <footer className="mt-16 border-t border-border pt-8 pb-4">
-          <div className="flex flex-wrap items-start justify-between gap-8">
-            <div>
-              <b className="font-display text-[15px] font-bold text-ink">Pure Motion</b>
-              <p className="mt-2 max-w-[280px] text-[12.5px] leading-relaxed text-muted">
-                B Floor, ONE at Me&rsquo;aisem First,
-                <br />
-                Jumeirah Golf Estates, Dubai, UAE
-              </p>
-              <p className="mt-2 text-[12.5px] text-muted">
-                +971 54 233 6404 &middot; info@puremotion.ae
-              </p>
-              <p className="mt-1 text-[12.5px] text-muted">Instagram &mdash; @puremotion.ae</p>
-            </div>
-            <nav className="flex flex-col gap-1.5 text-[12.5px] font-semibold text-ink-secondary">
-              <Link href="/schedule" className="hover:text-ink">
-                Schedule
-              </Link>
-              <Link href="/pricing" className="hover:text-ink">
-                Pricing
-              </Link>
-              <Link href="/waiver" className="hover:text-ink">
-                Liability Waiver
-              </Link>
-            </nav>
-          </div>
-          <p className="mt-8 text-[11.5px] text-muted">
-            &copy; {new Date().getFullYear()} Pure Motion. All rights reserved. Jumeirah
-            Golf Estates &middot; Dubai
-          </p>
-        </footer>
       </div>
+      <Footer />
     </main>
   );
 }

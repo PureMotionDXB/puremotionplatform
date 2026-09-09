@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ClassCard } from "@/components/ClassCard";
+import { Footer } from "@/components/Footer";
 import { firstName, getErrorMessage, statusFor, type Instructor } from "@/lib/schedule-data";
 import { fetchInstructors } from "@/lib/schedule-db";
 import {
@@ -305,6 +306,7 @@ function ScheduleContent() {
           )}
         </div>
       </div>
+      <Footer />
     </main>
   );
 }

@@ -1,3 +1,5 @@
+import { Footer } from "@/components/Footer";
+
 export default function PricingPage() {
   return (
     <main className="flex-1 bg-bg">
@@ -9,6 +11,7 @@ export default function PricingPage() {
           Real pricing (Starter Pack / Credit Pack / Membership) is being rebuilt here next.
         </p>
       </div>
+      <Footer />
     </main>
   );
 }
