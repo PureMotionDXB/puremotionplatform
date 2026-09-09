@@ -33,6 +33,7 @@ export default function AdminReportsPage() {
   useEffect(() => {
     fetchMyStaffInfo().then((info) => {
       if (info?.role === "instructor") router.replace("/admin/roster");
+      else if (info?.role !== "owner") router.replace("/admin/schedule");
     });
   }, [router]);
 

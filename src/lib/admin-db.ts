@@ -2,7 +2,7 @@ import { supabase } from "./supabase";
 import type { ClassFamily } from "./schedule-data";
 
 export interface StaffInfo {
-  role: "admin" | "instructor";
+  role: "owner" | "admin" | "instructor";
   instructorId: string | null;
 }
 
