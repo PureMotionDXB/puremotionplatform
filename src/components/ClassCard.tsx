@@ -70,15 +70,12 @@ export function ClassCard({
         </div>
       </div>
       <div className="w-full sm:w-[150px] sm:shrink-0">
-        <div className="mb-1.5 flex justify-between text-[11.5px]">
+        <div className="mb-1.5">
           <span
             className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${statusChipClass[status]}`}
           >
             {statusLabel(cls)}
           </span>
-          <b className="font-mono font-semibold">
-            {cls.booked}/{cls.capacity}
-          </b>
         </div>
         <div className="h-[5px] overflow-hidden rounded-full bg-surface-2">
           <div

@@ -5,30 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
-const services = [
-  {
-    title: "Reformer Pilates",
-    body: "Precision, strength, and flow on state-of-the-art Merrithew reformers — challenging and rewarding at every level.",
-    cta: "Book Reformer",
-    href: "/schedule?family=reformer",
-    image: "/images/reformer-room.jpg",
-  },
-  {
-    title: "Mat Classes: Yoga & Pilates",
-    body: "Build strength, boost flexibility, and find your center — whether you're a seasoned yogi or just starting out.",
-    cta: "Book Mat & Yoga",
-    href: "/schedule?family=mat",
-    image: null,
-  },
-  {
-    title: "Wellness Sessions & Workshops",
-    body: "Sound healing, guided meditation, and more — recovery and calm built into your week, not left for later.",
-    cta: "Explore wellness",
-    href: "/schedule?family=mat",
-    image: null,
-  },
-];
-
 const whyPureMotion = [
   {
     title: "Certified Instructors",
@@ -159,47 +135,6 @@ export default function Home() {
               sizes="(min-width: 1024px) 320px, 100vw"
               className="object-cover"
             />
-          </div>
-        </section>
-
-        <section className="mt-14">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-accent-strong">
-            Services we offer
-          </span>
-          <h2 className="mt-2 font-display text-[24px] font-bold text-ink">
-            Find your class
-          </h2>
-          <div className="mt-5 grid gap-4 sm:grid-cols-3">
-            {services.map((s) => (
-              <div
-                key={s.title}
-                className="flex flex-col overflow-hidden rounded-2xl border border-border bg-surface"
-              >
-                {s.image && (
-                  <div className="relative h-[140px]">
-                    <Image
-                      src={s.image}
-                      alt=""
-                      fill
-                      sizes="(min-width: 640px) 33vw, 100vw"
-                      className="object-cover"
-                    />
-                  </div>
-                )}
-                <div className="flex flex-1 flex-col p-5">
-                  <h3 className="font-display text-[16px] font-bold text-ink">{s.title}</h3>
-                  <p className="mt-2 flex-1 text-[13px] leading-relaxed text-ink-secondary">
-                    {s.body}
-                  </p>
-                  <Link
-                    href={s.href}
-                    className="mt-4 text-[13px] font-bold text-accent-strong hover:underline"
-                  >
-                    {s.cta} &rarr;
-                  </Link>
-                </div>
-              </div>
-            ))}
           </div>
         </section>
 
