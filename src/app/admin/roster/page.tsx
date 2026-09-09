@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { firstName, getErrorMessage, type Instructor } from "@/lib/schedule-data";
 import { fetchInstructors } from "@/lib/schedule-db";
-import { fetchRoster, type RosterEntry } from "@/lib/admin-db";
+import { fetchMyStaffInfo, fetchRoster, type RosterEntry, type StaffInfo } from "@/lib/admin-db";
 
 const familyLabel: Record<string, string> = { reformer: "Reformer", mat: "Mat" };
 const statusLabel: Record<string, string> = { booked: "Booked", waitlisted: "Waitlisted" };
@@ -19,6 +19,7 @@ export default function AdminRosterPage() {
   const [date, setDate] = useState(() => toISODate(new Date()));
   const [entries, setEntries] = useState<RosterEntry[]>([]);
   const [instructors, setInstructors] = useState<Instructor[]>([]);
+  const [staffInfo, setStaffInfo] = useState<StaffInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,11 +31,17 @@ export default function AdminRosterPage() {
     setLoading(true);
     setError(null);
     try {
-      const [rosterData, instructorData] = await Promise.all([
+      const [rosterData, instructorData, myInfo] = await Promise.all([
         fetchRoster(date),
         fetchInstructors(),
+        fetchMyStaffInfo(),
       ]);
-      setEntries(rosterData);
+      setStaffInfo(myInfo);
+      setEntries(
+        myInfo?.role === "instructor"
+          ? rosterData.filter((e) => e.instructor === myInfo.instructorId)
+          : rosterData,
+      );
       setInstructors(instructorData);
     } catch (err) {
       setError(getErrorMessage(err, "Failed to load the roster."));
@@ -42,6 +49,8 @@ export default function AdminRosterPage() {
       setLoading(false);
     }
   }
+
+  const isInstructor = staffInfo?.role === "instructor";
 
   const instructorName = useMemo(
     () => new Map(instructors.map((i) => [i.id, firstName(i.name)])),
@@ -51,9 +60,13 @@ export default function AdminRosterPage() {
   return (
     <main className="flex-1 bg-bg">
       <div className="mx-auto max-w-4xl px-7 py-8">
-        <h1 className="font-display text-[23px] font-bold text-ink">Roster</h1>
+        <h1 className="font-display text-[23px] font-bold text-ink">
+          {isInstructor ? "My Roster" : "Roster"}
+        </h1>
         <p className="mt-1 text-[13px] text-muted">
-          See who&rsquo;s booked into each class on a given day.
+          {isInstructor
+            ? "Who’s booked into your classes on a given day."
+            : "See who’s booked into each class on a given day."}
         </p>
 
         <input

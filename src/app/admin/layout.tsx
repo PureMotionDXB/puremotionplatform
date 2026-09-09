@@ -4,23 +4,30 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
+import { fetchMyStaffInfo, type StaffInfo } from "@/lib/admin-db";
 
-const navLinks = [
+const adminNavLinks = [
   { href: "/admin/schedule", label: "Schedule" },
   { href: "/admin/roster", label: "Roster" },
   { href: "/admin/clients", label: "Clients" },
 ];
 
+const instructorNavLinks = [{ href: "/admin/roster", label: "My Roster" }];
+
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [email, setEmail] = useState<string | null>(null);
+  const [staffInfo, setStaffInfo] = useState<StaffInfo | null>(null);
   const isLoginPage = pathname === "/admin/login";
 
   useEffect(() => {
     if (isLoginPage) return;
     supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
+    fetchMyStaffInfo().then(setStaffInfo);
   }, [isLoginPage]);
+
+  const navLinks = staffInfo?.role === "instructor" ? instructorNavLinks : adminNavLinks;
 
   if (isLoginPage) return <>{children}</>;
 

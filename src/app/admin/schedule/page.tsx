@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   DAYS,
   emptyClass,
@@ -17,6 +18,7 @@ import {
   insertInstructor,
   updateClass,
 } from "@/lib/schedule-db";
+import { fetchMyStaffInfo } from "@/lib/admin-db";
 
 type FormState = Omit<ScheduledClass, "id">;
 
@@ -27,6 +29,7 @@ const familyBadge: Record<string, string> = {
 };
 
 export default function AdminSchedulePage() {
+  const router = useRouter();
   const [classes, setClasses] = useState<ScheduledClass[]>([]);
   const [instructorRoster, setInstructorRoster] = useState<Instructor[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -35,6 +38,12 @@ export default function AdminSchedulePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchMyStaffInfo().then((info) => {
+      if (info?.role === "instructor") router.replace("/admin/roster");
+    });
+  }, [router]);
 
   useEffect(() => {
     let cancelled = false;

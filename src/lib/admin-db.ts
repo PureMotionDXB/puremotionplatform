@@ -1,6 +1,26 @@
 import { supabase } from "./supabase";
 import type { ClassFamily } from "./schedule-data";
 
+export interface StaffInfo {
+  role: "admin" | "instructor";
+  instructorId: string | null;
+}
+
+export async function fetchMyStaffInfo(): Promise<StaffInfo | null> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data, error } = await supabase
+    .from("staff")
+    .select("role, instructor_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return { role: data.role, instructorId: data.instructor_id };
+}
+
 export interface AdminClient {
   id: string;
   fullName: string;

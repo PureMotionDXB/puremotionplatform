@@ -1,12 +1,14 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { getErrorMessage } from "@/lib/schedule-data";
-import { adjustCredits, fetchAllClients, type AdminClient } from "@/lib/admin-db";
+import { adjustCredits, fetchAllClients, fetchMyStaffInfo, type AdminClient } from "@/lib/admin-db";
 
 type Family = "reformer" | "mat";
 
 export default function AdminClientsPage() {
+  const router = useRouter();
   const [clients, setClients] = useState<AdminClient[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -16,6 +18,12 @@ export default function AdminClientsPage() {
   const [delta, setDelta] = useState(1);
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchMyStaffInfo().then((info) => {
+      if (info?.role === "instructor") router.replace("/admin/roster");
+    });
+  }, [router]);
 
   useEffect(() => {
     load();
