@@ -218,6 +218,117 @@ export async function resolveFee(feeId: string, collected: boolean): Promise<voi
   if (error) throw error;
 }
 
+export interface AdminOccurrenceView {
+  occurrenceId: string;
+  date: string;
+  time: string;
+  name: string;
+  family: ClassFamily;
+  ladiesOnly: boolean;
+  instructor: string;
+  capacity: number;
+  bookedCount: number;
+  waitlistCount: number;
+  clientStatus: "none" | "booked" | "waitlisted";
+  clientBookingId: string | null;
+}
+
+interface AdminOccurrenceRow {
+  id: string;
+  date: string;
+  classes: {
+    time: string;
+    name: string;
+    family: ClassFamily;
+    ladies_only: boolean;
+    instructor_id: string;
+    capacity: number;
+  };
+}
+
+interface AdminBookingCountRow {
+  occurrence_id: string;
+  status: string;
+}
+
+export async function fetchOccurrencesForClient(
+  clientId: string,
+  startDate: string,
+  endDate: string,
+): Promise<AdminOccurrenceView[]> {
+  const { data: occurrenceRows, error } = await supabase
+    .from("class_occurrences")
+    .select("id, date, classes(time, name, family, ladies_only, instructor_id, capacity)")
+    .gte("date", startDate)
+    .lte("date", endDate);
+  if (error) throw error;
+
+  const rows = (occurrenceRows ?? []) as unknown as AdminOccurrenceRow[];
+  const occurrenceIds = rows.map((r) => r.id);
+
+  let counts: AdminBookingCountRow[] = [];
+  let clientBookings: { id: string; occurrence_id: string; status: string }[] = [];
+  if (occurrenceIds.length > 0) {
+    const { data: bookingRows, error: bookingsError } = await supabase
+      .from("bookings")
+      .select("occurrence_id, status")
+      .in("occurrence_id", occurrenceIds)
+      .in("status", ["booked", "waitlisted"]);
+    if (bookingsError) throw bookingsError;
+    counts = (bookingRows ?? []) as AdminBookingCountRow[];
+
+    const { data: clientRows, error: clientError } = await supabase
+      .from("bookings")
+      .select("id, occurrence_id, status")
+      .eq("client_id", clientId)
+      .in("occurrence_id", occurrenceIds)
+      .in("status", ["booked", "waitlisted"]);
+    if (clientError) throw clientError;
+    clientBookings = clientRows ?? [];
+  }
+
+  return rows.map((row) => {
+    const bookedCount = counts.filter(
+      (c) => c.occurrence_id === row.id && c.status === "booked",
+    ).length;
+    const waitlistCount = counts.filter(
+      (c) => c.occurrence_id === row.id && c.status === "waitlisted",
+    ).length;
+    const mine = clientBookings.find((b) => b.occurrence_id === row.id);
+    return {
+      occurrenceId: row.id,
+      date: row.date,
+      time: row.classes.time,
+      name: row.classes.name,
+      family: row.classes.family,
+      ladiesOnly: row.classes.ladies_only,
+      instructor: row.classes.instructor_id,
+      capacity: row.classes.capacity,
+      bookedCount,
+      waitlistCount,
+      clientStatus: mine ? (mine.status as "booked" | "waitlisted") : "none",
+      clientBookingId: mine?.id ?? null,
+    };
+  });
+}
+
+export async function adminBookClass(
+  clientId: string,
+  occurrenceId: string,
+): Promise<{ status: string }> {
+  const { data, error } = await supabase.rpc("book_class", {
+    p_occurrence_id: occurrenceId,
+    p_client_id: clientId,
+  });
+  if (error) throw error;
+  return data as { status: string };
+}
+
+export async function adminCancelBooking(bookingId: string): Promise<void> {
+  const { error } = await supabase.rpc("cancel_booking", { p_booking_id: bookingId });
+  if (error) throw error;
+}
+
 export interface ClassOccupancy {
   name: string;
   family: ClassFamily;

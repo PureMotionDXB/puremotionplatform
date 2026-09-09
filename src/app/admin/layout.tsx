@@ -9,6 +9,7 @@ import { fetchMyStaffInfo, type StaffInfo } from "@/lib/admin-db";
 const adminNavLinks = [
   { href: "/admin/schedule", label: "Schedule" },
   { href: "/admin/roster", label: "Roster" },
+  { href: "/admin/book", label: "Book for client" },
   { href: "/admin/clients", label: "Clients" },
   { href: "/admin/reports", label: "Reports" },
 ];

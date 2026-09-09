@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getErrorMessage } from "@/lib/schedule-data";
 import {
@@ -188,12 +189,20 @@ export default function AdminClientsPage() {
                       <td className="px-3 py-2.5 font-mono">{c.reformerCredits}</td>
                       <td className="px-3 py-2.5 font-mono">{c.matCredits}</td>
                       <td className="px-3 py-2.5 text-right">
-                        <button
-                          onClick={() => startAdjust(c.id)}
-                          className="text-[12px] font-bold text-accent-strong hover:underline"
-                        >
-                          Adjust credits
-                        </button>
+                        <div className="flex justify-end gap-3">
+                          <Link
+                            href={`/admin/book?client=${c.id}`}
+                            className="text-[12px] font-bold text-accent-strong hover:underline"
+                          >
+                            Book a class
+                          </Link>
+                          <button
+                            onClick={() => startAdjust(c.id)}
+                            className="text-[12px] font-bold text-accent-strong hover:underline"
+                          >
+                            Adjust credits
+                          </button>
+                        </div>
                       </td>
                     </tr>
                     {adjustingId === c.id && (
