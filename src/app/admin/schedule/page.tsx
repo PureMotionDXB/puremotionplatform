@@ -303,9 +303,15 @@ export default function AdminSchedulePage() {
           </div>
         )}
 
-        <div className="mt-6 rounded-2xl border border-border bg-surface p-5">
-          <h3 className="mb-3 text-[14.5px] font-bold text-ink">Instructors</h3>
-          <div className="flex flex-wrap gap-2">
+        <details className="mt-6 rounded-2xl border border-border bg-surface p-5">
+          <summary className="cursor-pointer text-[14.5px] font-bold text-ink">
+            Instructors ({instructorRoster.length})
+          </summary>
+          <p className="mt-2 text-[12.5px] text-muted">
+            The names available in the &ldquo;Instructor&rdquo; field below when you add or
+            edit a class. Add a new one here first if it&rsquo;s not on the list yet.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
             {instructorRoster.map((i) => (
               <span
                 key={i.id}
@@ -330,7 +336,7 @@ export default function AdminSchedulePage() {
               Add
             </button>
           </div>
-        </div>
+        </details>
 
         <div className="mt-6 space-y-6">
           {loading ? (
