@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -74,6 +75,12 @@ export default function AdminLoginPage() {
         >
           {loading ? "Signing in…" : "Sign in"}
         </button>
+
+        <p className="mt-4 text-center text-[12.5px] text-muted">
+          <Link href="/reset-password" className="font-bold text-accent-strong hover:underline">
+            Forgot your password?
+          </Link>
+        </p>
       </form>
     </main>
   );

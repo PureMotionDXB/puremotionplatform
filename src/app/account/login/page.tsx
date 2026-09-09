@@ -80,6 +80,11 @@ export default function AccountLoginPage() {
             Create an account
           </Link>
         </p>
+        <p className="mt-2 text-center text-[12.5px] text-muted">
+          <Link href="/reset-password" className="font-bold text-accent-strong hover:underline">
+            Forgot your password?
+          </Link>
+        </p>
       </form>
     </main>
   );
