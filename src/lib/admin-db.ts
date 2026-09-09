@@ -217,3 +217,120 @@ export async function resolveFee(feeId: string, collected: boolean): Promise<voi
   });
   if (error) throw error;
 }
+
+export interface ClassOccupancy {
+  name: string;
+  family: ClassFamily;
+  sessions: number;
+  totalCapacity: number;
+  totalOccupied: number;
+  occupancyPct: number;
+  attended: number;
+  noShow: number;
+}
+
+export interface OccupancyReport {
+  totalClasses: number;
+  totalCapacity: number;
+  totalOccupied: number;
+  totalAttended: number;
+  totalNoShow: number;
+  occupancyPct: number;
+  attendanceRate: number | null;
+  byClass: ClassOccupancy[];
+}
+
+interface ReportOccurrenceRow {
+  id: string;
+  date: string;
+  classes: { name: string; family: ClassFamily; capacity: number };
+}
+
+interface ReportBookingRow {
+  occurrence_id: string;
+  status: "booked" | "attended" | "no_show";
+}
+
+export async function fetchOccupancyReport(
+  startDate: string,
+  endDate: string,
+): Promise<OccupancyReport> {
+  const { data: occRows, error } = await supabase
+    .from("class_occurrences")
+    .select("id, date, classes(name, family, capacity)")
+    .gte("date", startDate)
+    .lte("date", endDate);
+  if (error) throw error;
+  const occurrences = (occRows ?? []) as unknown as ReportOccurrenceRow[];
+  const occurrenceIds = occurrences.map((o) => o.id);
+
+  let bookingRows: ReportBookingRow[] = [];
+  if (occurrenceIds.length > 0) {
+    const { data, error: bookingsError } = await supabase
+      .from("bookings")
+      .select("occurrence_id, status")
+      .in("occurrence_id", occurrenceIds)
+      .in("status", ["booked", "attended", "no_show"]);
+    if (bookingsError) throw bookingsError;
+    bookingRows = (data ?? []) as ReportBookingRow[];
+  }
+
+  const byClassMap = new Map<string, ClassOccupancy>();
+  let totalCapacity = 0;
+  let totalOccupied = 0;
+  let totalAttended = 0;
+  let totalNoShow = 0;
+
+  for (const occ of occurrences) {
+    const bookingsForOcc = bookingRows.filter((b) => b.occurrence_id === occ.id);
+    const occupied = bookingsForOcc.length;
+    const attended = bookingsForOcc.filter((b) => b.status === "attended").length;
+    const noShow = bookingsForOcc.filter((b) => b.status === "no_show").length;
+
+    totalCapacity += occ.classes.capacity;
+    totalOccupied += occupied;
+    totalAttended += attended;
+    totalNoShow += noShow;
+
+    const existing = byClassMap.get(occ.classes.name);
+    if (existing) {
+      existing.sessions += 1;
+      existing.totalCapacity += occ.classes.capacity;
+      existing.totalOccupied += occupied;
+      existing.attended += attended;
+      existing.noShow += noShow;
+    } else {
+      byClassMap.set(occ.classes.name, {
+        name: occ.classes.name,
+        family: occ.classes.family,
+        sessions: 1,
+        totalCapacity: occ.classes.capacity,
+        totalOccupied: occupied,
+        occupancyPct: 0,
+        attended,
+        noShow,
+      });
+    }
+  }
+
+  const byClass = Array.from(byClassMap.values())
+    .map((c) => ({
+      ...c,
+      occupancyPct: c.totalCapacity > 0 ? Math.round((c.totalOccupied / c.totalCapacity) * 100) : 0,
+    }))
+    .sort((a, b) => b.occupancyPct - a.occupancyPct);
+
+  return {
+    totalClasses: occurrences.length,
+    totalCapacity,
+    totalOccupied,
+    totalAttended,
+    totalNoShow,
+    occupancyPct: totalCapacity > 0 ? Math.round((totalOccupied / totalCapacity) * 100) : 0,
+    attendanceRate:
+      totalAttended + totalNoShow > 0
+        ? Math.round((totalAttended / (totalAttended + totalNoShow)) * 100)
+        : null,
+    byClass,
+  };
+}
