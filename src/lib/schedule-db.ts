@@ -12,6 +12,7 @@ interface ClassRow {
   instructor_id: string;
   capacity: number;
   booked: number;
+  description: string | null;
 }
 
 function fromRow(row: ClassRow): ScheduledClass {
@@ -26,6 +27,7 @@ function fromRow(row: ClassRow): ScheduledClass {
     instructor: row.instructor_id,
     capacity: row.capacity,
     booked: row.booked,
+    description: row.description,
   };
 }
 
@@ -40,6 +42,7 @@ function toRow(cls: Omit<ScheduledClass, "id">) {
     instructor_id: cls.instructor,
     capacity: cls.capacity,
     booked: cls.booked,
+    description: cls.description,
   };
 }
 
@@ -82,7 +85,36 @@ export async function deleteClass(id: string): Promise<void> {
   if (error) throw error;
 }
 
-export async function insertInstructor(instructor: Instructor): Promise<void> {
+export async function insertInstructor(instructor: Omit<Instructor, "bio">): Promise<void> {
   const { error } = await supabase.from("instructors").insert(instructor);
   if (error) throw error;
+}
+
+export async function updateInstructorBio(id: string, bio: string): Promise<void> {
+  const { error } = await supabase
+    .from("instructors")
+    .update({ bio: bio.trim() || null })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export interface ClassDetail extends ScheduledClass {
+  instructorName: string;
+  instructorBio: string | null;
+}
+
+export async function fetchClassDetail(id: string): Promise<ClassDetail | null> {
+  const { data, error } = await supabase
+    .from("classes")
+    .select("*, instructors(name, bio)")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const row = data as ClassRow & { instructors: { name: string; bio: string | null } | null };
+  return {
+    ...fromRow(row),
+    instructorName: row.instructors?.name ?? row.instructor_id,
+    instructorBio: row.instructors?.bio ?? null,
+  };
 }

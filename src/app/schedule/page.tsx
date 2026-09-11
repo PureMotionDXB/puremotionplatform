@@ -300,6 +300,7 @@ function ScheduleContent() {
                   }}
                   instructorName={instructorName.get(occ.instructor) ?? occ.instructor}
                   action={action}
+                  detailHref={`/classes/${occ.classId}`}
                 />
               );
             })

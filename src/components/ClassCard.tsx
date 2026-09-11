@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { statusFor, statusLabel, type ClassFamily } from "@/lib/schedule-data";
 
 interface CardClass {
@@ -36,10 +37,12 @@ export function ClassCard({
   cls,
   instructorName,
   action,
+  detailHref,
 }: {
   cls: CardClass;
   instructorName: string;
   action?: ReactNode;
+  detailHref?: string;
 }) {
   const status = statusFor(cls);
   const pct = Math.round((cls.booked / cls.capacity) * 100);
@@ -56,7 +59,16 @@ export function ClassCard({
         />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <div className="text-[14.5px] font-bold text-ink">{cls.name}</div>
+            {detailHref ? (
+              <Link
+                href={detailHref}
+                className="text-[14.5px] font-bold text-ink hover:text-accent-strong hover:underline"
+              >
+                {cls.name}
+              </Link>
+            ) : (
+              <div className="text-[14.5px] font-bold text-ink">{cls.name}</div>
+            )}
             {cls.ladiesOnly && (
               <span className="shrink-0 rounded-full bg-secondary-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-secondary-strong">
                 Ladies only

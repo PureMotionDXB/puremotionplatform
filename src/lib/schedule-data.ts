@@ -11,6 +11,7 @@ export interface ScheduledClass {
   instructor: string; // instructor id, see the instructors table
   capacity: number;
   booked: number;
+  description: string | null;
 }
 
 export const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
@@ -18,6 +19,7 @@ export const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 export interface Instructor {
   id: string;
   name: string;
+  bio: string | null;
 }
 
 export function emptyClass(defaultInstructorId = ""): Omit<ScheduledClass, "id"> {
@@ -31,6 +33,7 @@ export function emptyClass(defaultInstructorId = ""): Omit<ScheduledClass, "id">
     instructor: defaultInstructorId,
     capacity: 10,
     booked: 0,
+    description: null,
   };
 }
 
