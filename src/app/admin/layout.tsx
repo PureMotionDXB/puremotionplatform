@@ -11,6 +11,7 @@ const ownerNavLinks = [
   { href: "/admin/roster", label: "Roster" },
   { href: "/admin/book", label: "Book for client" },
   { href: "/admin/clients", label: "Clients" },
+  { href: "/admin/instructors", label: "Instructors" },
   { href: "/admin/reports", label: "Reports" },
 ];
 
@@ -19,6 +20,7 @@ const adminNavLinks = [
   { href: "/admin/roster", label: "Roster" },
   { href: "/admin/book", label: "Book for client" },
   { href: "/admin/clients", label: "Clients" },
+  { href: "/admin/instructors", label: "Instructors" },
 ];
 
 const instructorNavLinks = [{ href: "/admin/roster", label: "My Roster" }];

@@ -15,9 +15,7 @@ import {
   fetchClasses,
   fetchInstructors,
   insertClass,
-  insertInstructor,
   updateClass,
-  updateInstructorBio,
 } from "@/lib/schedule-db";
 import { fetchMyStaffInfo } from "@/lib/admin-db";
 
@@ -35,13 +33,9 @@ export default function AdminSchedulePage() {
   const [instructorRoster, setInstructorRoster] = useState<Instructor[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState | null>(null);
-  const [newInstructorName, setNewInstructorName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [editingBioId, setEditingBioId] = useState<string | null>(null);
-  const [bioDraft, setBioDraft] = useState("");
-  const [savingBio, setSavingBio] = useState(false);
 
   useEffect(() => {
     fetchMyStaffInfo().then((info) => {
@@ -131,44 +125,6 @@ export default function AdminSchedulePage() {
     }
   }
 
-  async function addInstructor() {
-    const name = newInstructorName.trim();
-    if (!name) return;
-    const id = name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-    setError(null);
-    try {
-      await insertInstructor({ id, name });
-      setInstructorRoster((prev) => [...prev, { id, name, bio: null }]);
-      setNewInstructorName("");
-    } catch (err) {
-      setError(getErrorMessage(err, "Failed to add the instructor."));
-    }
-  }
-
-  function startEditBio(instructor: Instructor) {
-    setEditingBioId(instructor.id);
-    setBioDraft(instructor.bio ?? "");
-  }
-
-  async function saveBio() {
-    if (!editingBioId || savingBio) return;
-    setSavingBio(true);
-    setError(null);
-    try {
-      await updateInstructorBio(editingBioId, bioDraft);
-      setInstructorRoster((prev) =>
-        prev.map((i) =>
-          i.id === editingBioId ? { ...i, bio: bioDraft.trim() || null } : i,
-        ),
-      );
-      setEditingBioId(null);
-    } catch (err) {
-      setError(getErrorMessage(err, "Failed to save the bio."));
-    } finally {
-      setSavingBio(false);
-    }
-  }
-
   const classNames = useMemo(
     () => Array.from(new Set(classes.map((c) => c.name))).sort(),
     [classes],
@@ -197,13 +153,21 @@ export default function AdminSchedulePage() {
               Add, edit, or remove classes — changes here update what clients see.
             </p>
           </div>
-          <button
-            onClick={startAdd}
-            disabled={loading}
-            className="rounded-[9px] bg-accent-strong px-4 py-2.5 text-[13px] font-bold text-accent-ink transition hover:brightness-110 disabled:opacity-50"
-          >
-            + Add class
-          </button>
+          <div className="flex gap-2.5">
+            <Link
+              href="/admin/instructors"
+              className="rounded-[9px] border border-border-strong px-4 py-2.5 text-[13px] font-bold text-ink transition hover:bg-surface-2"
+            >
+              Manage instructors
+            </Link>
+            <button
+              onClick={startAdd}
+              disabled={loading}
+              className="rounded-[9px] bg-accent-strong px-4 py-2.5 text-[13px] font-bold text-accent-ink transition hover:brightness-110 disabled:opacity-50"
+            >
+              + Add class
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -340,83 +304,6 @@ export default function AdminSchedulePage() {
             </div>
           </div>
         )}
-
-        <details className="mt-6 rounded-2xl border border-border bg-surface p-5">
-          <summary className="cursor-pointer text-[14.5px] font-bold text-ink">
-            Instructors ({instructorRoster.length})
-          </summary>
-          <p className="mt-2 text-[12.5px] text-muted">
-            The names available in the &ldquo;Instructor&rdquo; field below when you add or
-            edit a class. Add a new one here first if it&rsquo;s not on the list yet. Pick a
-            name to add or edit their bio, shown on class detail pages.
-          </p>
-          <label className="mt-3 flex flex-col gap-1.5">
-            <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
-              Edit a bio
-            </span>
-            <select
-              className="field-input max-w-[280px]"
-              value={editingBioId ?? ""}
-              onChange={(e) => {
-                const instructor = instructorRoster.find((i) => i.id === e.target.value);
-                if (instructor) startEditBio(instructor);
-              }}
-            >
-              <option value="" disabled>
-                Select an instructor…
-              </option>
-              {instructorRoster.map((i) => (
-                <option key={i.id} value={i.id}>
-                  {i.name}
-                  {i.bio ? " ✓ has bio" : ""}
-                </option>
-              ))}
-            </select>
-          </label>
-          {editingBioId && (
-            <div className="mt-3 rounded-xl border border-border bg-surface-2 p-3.5">
-              <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
-                Bio for {instructorRoster.find((i) => i.id === editingBioId)?.name}
-              </span>
-              <textarea
-                className="field-input mt-1.5 min-h-[80px] w-full"
-                value={bioDraft}
-                onChange={(e) => setBioDraft(e.target.value)}
-                placeholder="A couple of sentences shown on class detail pages…"
-              />
-              <div className="mt-2 flex gap-2">
-                <button
-                  onClick={saveBio}
-                  disabled={savingBio}
-                  className="rounded-[9px] bg-accent-strong px-3.5 py-2 text-[12.5px] font-bold text-accent-ink hover:brightness-110 disabled:opacity-50"
-                >
-                  {savingBio ? "Saving…" : "Save bio"}
-                </button>
-                <button
-                  onClick={() => setEditingBioId(null)}
-                  className="rounded-[9px] border border-border-strong px-3.5 py-2 text-[12.5px] font-bold text-ink hover:bg-surface"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-          <div className="mt-3 flex gap-2">
-            <input
-              className="field-input max-w-[220px]"
-              placeholder="Add instructor name"
-              value={newInstructorName}
-              onChange={(e) => setNewInstructorName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addInstructor()}
-            />
-            <button
-              onClick={addInstructor}
-              className="rounded-[9px] border border-border-strong px-3.5 py-2 text-[12.5px] font-bold text-ink hover:bg-surface-2"
-            >
-              Add
-            </button>
-          </div>
-        </details>
 
         <div className="mt-6 space-y-6">
           {loading ? (

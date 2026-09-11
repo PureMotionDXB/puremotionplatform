@@ -90,11 +90,24 @@ export async function insertInstructor(instructor: Omit<Instructor, "bio">): Pro
   if (error) throw error;
 }
 
-export async function updateInstructorBio(id: string, bio: string): Promise<void> {
-  const { error } = await supabase
+export async function fetchInstructor(id: string): Promise<Instructor | null> {
+  const { data, error } = await supabase
     .from("instructors")
-    .update({ bio: bio.trim() || null })
-    .eq("id", id);
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return data as Instructor | null;
+}
+
+export async function updateInstructor(
+  id: string,
+  fields: { name?: string; bio?: string },
+): Promise<void> {
+  const patch: Record<string, string | null> = {};
+  if (fields.name !== undefined) patch.name = fields.name;
+  if (fields.bio !== undefined) patch.bio = fields.bio.trim() || null;
+  const { error } = await supabase.from("instructors").update(patch).eq("id", id);
   if (error) throw error;
 }
 
