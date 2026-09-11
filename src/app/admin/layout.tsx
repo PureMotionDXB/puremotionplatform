@@ -13,6 +13,7 @@ const ownerNavLinks = [
   { href: "/admin/clients", label: "Clients" },
   { href: "/admin/instructors", label: "Instructors" },
   { href: "/admin/reports", label: "Reports" },
+  { href: "/admin/finance", label: "Finance" },
 ];
 
 const adminNavLinks = [
