@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { notifyWaitlistPromoted } from "./notify";
 import type { ClassFamily } from "./schedule-data";
 
 export interface OccurrenceView {
@@ -116,9 +117,15 @@ export async function bookClass(occurrenceId: string): Promise<{ status: string 
   return data as { status: string };
 }
 
+interface PromotionResult {
+  promoted_booking_id?: string | null;
+}
+
 export async function cancelBooking(bookingId: string): Promise<void> {
-  const { error } = await supabase.rpc("cancel_booking", { p_booking_id: bookingId });
+  const { data, error } = await supabase.rpc("cancel_booking", { p_booking_id: bookingId });
   if (error) throw error;
+  const promotedId = (data as PromotionResult | null)?.promoted_booking_id;
+  if (promotedId) notifyWaitlistPromoted(promotedId);
 }
 
 export async function rescheduleBooking(
@@ -130,7 +137,9 @@ export async function rescheduleBooking(
     p_new_occurrence_id: newOccurrenceId,
   });
   if (error) throw error;
-  return data as { status: string };
+  const result = data as { status: string } & PromotionResult;
+  if (result.promoted_booking_id) notifyWaitlistPromoted(result.promoted_booking_id);
+  return result;
 }
 
 export interface ClientProfile {

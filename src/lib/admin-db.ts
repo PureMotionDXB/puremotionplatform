@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { notifyWaitlistPromoted } from "./notify";
 import type { ClassFamily } from "./schedule-data";
 
 export interface StaffInfo {
@@ -325,8 +326,10 @@ export async function adminBookClass(
 }
 
 export async function adminCancelBooking(bookingId: string): Promise<void> {
-  const { error } = await supabase.rpc("cancel_booking", { p_booking_id: bookingId });
+  const { data, error } = await supabase.rpc("cancel_booking", { p_booking_id: bookingId });
   if (error) throw error;
+  const promotedId = (data as { promoted_booking_id?: string | null } | null)?.promoted_booking_id;
+  if (promotedId) notifyWaitlistPromoted(promotedId);
 }
 
 export interface ClassOccupancy {
