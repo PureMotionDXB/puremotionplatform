@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { countryCodes } from "@/lib/country-codes";
+import { Header } from "@/components/Header";
 
 function calculateAge(dob: string): number {
   const birthDate = new Date(`${dob}T00:00:00`);
@@ -88,25 +89,30 @@ export default function SignupPage() {
 
   if (checkEmail) {
     return (
-      <main className="flex flex-1 items-center justify-center bg-bg px-6 py-12">
-        <div className="w-full max-w-[360px] rounded-2xl border border-border bg-surface p-6 text-center">
-          <h1 className="font-display text-[19px] font-bold text-ink">Check your email</h1>
-          <p className="mt-2 text-[13px] text-muted">
-            We sent a confirmation link to {email}. Click it, then come back and sign in.
-          </p>
-          <Link
-            href="/account/login"
-            className="mt-4 inline-block text-[13px] font-bold text-accent-strong hover:underline"
-          >
-            Go to sign in
-          </Link>
+      <main className="flex flex-1 flex-col bg-bg">
+        <Header />
+        <div className="flex flex-1 items-center justify-center px-6 py-12">
+          <div className="w-full max-w-[360px] rounded-2xl border border-border bg-surface p-6 text-center">
+            <h1 className="font-display text-[19px] font-bold text-ink">Check your email</h1>
+            <p className="mt-2 text-[13px] text-muted">
+              We sent a confirmation link to {email}. Click it, then come back and sign in.
+            </p>
+            <Link
+              href="/account/login"
+              className="mt-4 inline-block text-[13px] font-bold text-accent-strong hover:underline"
+            >
+              Go to sign in
+            </Link>
+          </div>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center bg-bg px-6 py-12">
+    <main className="flex flex-1 flex-col bg-bg">
+      <Header />
+      <div className="flex flex-1 items-center justify-center px-6 py-12">
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-[400px] rounded-2xl border border-border bg-surface p-6"
@@ -277,6 +283,7 @@ export default function SignupPage() {
           </Link>
         </p>
       </form>
+      </div>
     </main>
   );
 }

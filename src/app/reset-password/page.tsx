@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { Header } from "@/components/Header";
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState("");
@@ -26,7 +27,9 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center bg-bg px-6 py-12">
+    <main className="flex flex-1 flex-col bg-bg">
+      <Header />
+      <div className="flex flex-1 items-center justify-center px-6 py-12">
       <div className="w-full max-w-[360px] rounded-2xl border border-border bg-surface p-6">
         <h1 className="font-display text-[19px] font-bold text-ink">Reset your password</h1>
         <p className="mt-1 text-[13px] text-muted">
@@ -72,6 +75,7 @@ export default function ResetPasswordPage() {
             Back to sign in
           </Link>
         </p>
+      </div>
       </div>
     </main>
   );

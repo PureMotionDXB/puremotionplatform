@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { getErrorMessage, statusFor, statusLabel as spotsLabel } from "@/lib/schedule-data";
 import {
@@ -179,11 +180,12 @@ export default function AccountPage() {
 
   return (
     <main className="flex-1 bg-bg">
+      <Header />
       <div className="mx-auto max-w-3xl px-7 py-8">
         <div className="flex items-center justify-between">
-          <Link href="/" className="text-[13px] font-semibold text-muted hover:text-ink">
-            &larr; Pure Motion
-          </Link>
+          <h1 className="font-display text-[23px] font-bold text-ink">
+            {client.fullName ? `Hi, ${client.fullName.split(" ")[0]}` : "My account"}
+          </h1>
           <button
             onClick={logOut}
             className="text-[12px] font-bold text-status-critical hover:underline"
@@ -191,10 +193,6 @@ export default function AccountPage() {
             Log out
           </button>
         </div>
-
-        <h1 className="mt-2 font-display text-[23px] font-bold text-ink">
-          {client.fullName ? `Hi, ${client.fullName.split(" ")[0]}` : "My account"}
-        </h1>
 
         {error && (
           <div className="mt-4 rounded-2xl border border-status-critical bg-status-critical-soft p-4 text-[13px] text-status-critical">

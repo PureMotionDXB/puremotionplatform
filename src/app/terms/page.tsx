@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 
 export const metadata = {
@@ -8,11 +9,9 @@ export const metadata = {
 export default function TermsPage() {
   return (
     <main className="flex-1 bg-bg">
+      <Header />
       <div className="mx-auto max-w-2xl px-7 py-8">
-        <Link href="/" className="text-[13px] font-semibold text-muted hover:text-ink">
-          &larr; Pure Motion
-        </Link>
-        <h1 className="mt-2 font-display text-[22px] font-bold text-ink">
+        <h1 className="font-display text-[22px] font-bold text-ink">
           Terms &amp; Conditions
         </h1>
         <p className="mt-1 text-[13px] text-muted">

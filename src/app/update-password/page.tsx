@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { Header } from "@/components/Header";
 import { getErrorMessage } from "@/lib/schedule-data";
 import { fetchMyStaffInfo } from "@/lib/admin-db";
 
@@ -67,7 +68,9 @@ export default function UpdatePasswordPage() {
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center bg-bg px-6 py-12">
+    <main className="flex flex-1 flex-col bg-bg">
+      <Header />
+      <div className="flex flex-1 items-center justify-center px-6 py-12">
       <div className="w-full max-w-[360px] rounded-2xl border border-border bg-surface p-6">
         <h1 className="font-display text-[19px] font-bold text-ink">Set a new password</h1>
 
@@ -125,6 +128,7 @@ export default function UpdatePasswordPage() {
             </button>
           </form>
         )}
+      </div>
       </div>
     </main>
   );

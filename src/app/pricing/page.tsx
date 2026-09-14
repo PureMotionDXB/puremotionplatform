@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 
 type TabKey = "starter" | "credit" | "membership";
@@ -93,6 +94,7 @@ export default function PricingPage() {
 
   return (
     <main className="flex-1 bg-bg">
+      <Header />
       <div className="mx-auto max-w-6xl px-7 py-8">
         <h1 className="font-display text-[23px] font-bold text-ink">
           Memberships &amp; Packages

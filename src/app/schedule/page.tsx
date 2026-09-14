@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ClassCard } from "@/components/ClassCard";
+import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { firstName, getErrorMessage, statusFor, type Instructor } from "@/lib/schedule-data";
 import { fetchInstructors } from "@/lib/schedule-db";
@@ -139,24 +140,8 @@ function ScheduleContent() {
 
   return (
     <main className="flex-1 bg-bg">
+      <Header />
       <div className="mx-auto max-w-6xl px-7 py-8">
-        <div className="mb-1 flex items-center justify-between gap-3">
-          <Link href="/" className="text-[13px] font-semibold text-muted hover:text-ink">
-            &larr; Pure Motion
-          </Link>
-          {signedIn ? (
-            <Link href="/account" className="text-[13px] font-semibold text-muted hover:text-ink">
-              My account
-            </Link>
-          ) : (
-            <Link
-              href="/account/login"
-              className="text-[13px] font-semibold text-accent-strong hover:underline"
-            >
-              Sign in
-            </Link>
-          )}
-        </div>
         <h1 className="font-display text-[23px] font-bold text-ink">Book a class</h1>
         <p className="mt-1 text-[13px] text-muted">
           Reformer beds fill up fast — grab your spot ahead of time.

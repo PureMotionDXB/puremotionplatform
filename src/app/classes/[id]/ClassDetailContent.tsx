@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { DAYS, getErrorMessage } from "@/lib/schedule-data";
 import { fetchClassDetail, type ClassDetail } from "@/lib/schedule-db";
 
@@ -21,6 +23,7 @@ export function ClassDetailContent({ id }: { id: string }) {
 
   return (
     <main className="flex-1 bg-bg">
+      <Header />
       <div className="mx-auto max-w-2xl px-7 py-8">
         <Link href="/schedule" className="text-[13px] font-semibold text-muted hover:text-ink">
           &larr; Schedule
@@ -80,6 +83,7 @@ export function ClassDetailContent({ id }: { id: string }) {
           </>
         )}
       </div>
+      <Footer />
     </main>
   );
 }

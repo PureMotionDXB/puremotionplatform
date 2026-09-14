@@ -1,9 +1,6 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 
 const whyPureMotion = [
@@ -35,46 +32,10 @@ const studioGuide = [
 ];
 
 export default function Home() {
-  const [signedIn, setSignedIn] = useState(false);
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setSignedIn(data.user !== null));
-  }, []);
-
   return (
     <main className="flex-1 bg-bg">
+      <Header />
       <div className="mx-auto max-w-6xl px-7 py-8">
-        <header className="mb-10 flex flex-wrap items-center justify-between gap-4">
-          <Image
-            src="/logo.png"
-            alt="Pure Motion"
-            width={1200}
-            height={800}
-            priority
-            className="h-14 w-auto"
-          />
-          <nav className="flex items-center gap-5 text-[13px] font-semibold">
-            <Link href="/schedule" className="text-ink-secondary hover:text-ink">
-              Schedule
-            </Link>
-            <Link href="/pricing" className="text-ink-secondary hover:text-ink">
-              Pricing
-            </Link>
-            <Link href="/terms" className="text-ink-secondary hover:text-ink">
-              Studio Policy
-            </Link>
-            {signedIn ? (
-              <Link href="/account" className="text-ink-secondary hover:text-ink">
-                My account
-              </Link>
-            ) : (
-              <Link href="/account/login" className="text-accent-strong hover:underline">
-                Sign in
-              </Link>
-            )}
-          </nav>
-        </header>
-
         <section className="grid gap-6 lg:grid-cols-[minmax(0,600px)_1fr] lg:items-stretch">
           <div className="rounded-2xl border border-border bg-gradient-to-br from-surface to-surface-2 p-10 shadow-sm">
             <span className="inline-block rounded-full bg-accent-soft px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-accent-strong">

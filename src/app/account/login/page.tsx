@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { Header } from "@/components/Header";
 
 export default function AccountLoginPage() {
   const router = useRouter();
@@ -27,7 +28,9 @@ export default function AccountLoginPage() {
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center bg-bg px-6 py-12">
+    <main className="flex flex-1 flex-col bg-bg">
+      <Header />
+      <div className="flex flex-1 items-center justify-center px-6 py-12">
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-[360px] rounded-2xl border border-border bg-surface p-6"
@@ -86,6 +89,7 @@ export default function AccountLoginPage() {
           </Link>
         </p>
       </form>
+      </div>
     </main>
   );
 }
