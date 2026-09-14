@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { notifyWaitlistPromoted } from "./notify";
+import { notifyFirstClass, notifyWaitlistPromoted } from "./notify";
 import type { ClassFamily } from "./schedule-data";
 
 export interface StaffInfo {
@@ -157,11 +157,15 @@ export async function fetchRoster(date: string): Promise<RosterEntry[]> {
 }
 
 export async function setAttendance(bookingId: string, attended: boolean): Promise<void> {
-  const { error } = await supabase.rpc("set_attendance", {
+  const { data, error } = await supabase.rpc("set_attendance", {
     p_booking_id: bookingId,
     p_attended: attended,
   });
   if (error) throw error;
+  const result = data as { first_attendance?: boolean; client_id?: string } | null;
+  if (result?.first_attendance && result.client_id) {
+    notifyFirstClass(result.client_id);
+  }
 }
 
 export async function markNoShow(bookingId: string): Promise<void> {

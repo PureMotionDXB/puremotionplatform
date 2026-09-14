@@ -9,3 +9,11 @@ export function notifyWaitlistPromoted(bookingId: string): void {
     body: JSON.stringify({ bookingId }),
   }).catch(() => {});
 }
+
+export function notifyFirstClass(clientId: string): void {
+  fetch("/api/notify/first-class", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ clientId }),
+  }).catch(() => {});
+}
