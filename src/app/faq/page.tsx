@@ -54,7 +54,7 @@ const faqs = [
   },
   {
     q: "What classes do you offer?",
-    a: "We offer Reformer Pilates, Mat Pilates, Yoga, and Sound Healing, all designed to support both body and mind.",
+    a: "We offer Reformer Pilates, Mat Pilates, and Yoga, all designed to support both body and mind.",
   },
 ];
 

@@ -11,7 +11,7 @@ const studioSpaces = [
   },
   {
     name: "The Sanctuary",
-    body: "With calming sage tones and a quieter atmosphere, the Sanctuary offers space for Mat Pilates, Yoga, and Sound Healing. A place to move mindfully, reconnect with your breath, and leave feeling more grounded.",
+    body: "With calming sage tones and a quieter atmosphere, the Sanctuary offers space for Mat Pilates and Yoga. A place to move mindfully, reconnect with your breath, and leave feeling more grounded.",
   },
 ];
 
@@ -31,9 +31,8 @@ export default function AboutPage() {
           </p>
           <p>
             Set in Jumeirah Golf Estates, our boutique studio brings together Reformer
-            Pilates, Mat Pilates, Yoga, and Sound Healing. Thoughtful classes and personal
-            guidance give you space to build strength, find balance, and take time for
-            yourself.
+            Pilates, Mat Pilates, and Yoga. Thoughtful classes and personal guidance give
+            you space to build strength, find balance, and take time for yourself.
           </p>
           <p>
             From your first visit to your weekly routine, we want you to feel welcome,
