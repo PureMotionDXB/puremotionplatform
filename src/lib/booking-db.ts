@@ -121,6 +121,18 @@ export async function cancelBooking(bookingId: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function rescheduleBooking(
+  oldBookingId: string,
+  newOccurrenceId: string,
+): Promise<{ status: string }> {
+  const { data, error } = await supabase.rpc("reschedule_booking", {
+    p_old_booking_id: oldBookingId,
+    p_new_occurrence_id: newOccurrenceId,
+  });
+  if (error) throw error;
+  return data as { status: string };
+}
+
 export interface ClientProfile {
   id: string;
   fullName: string;
