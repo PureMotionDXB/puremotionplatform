@@ -34,7 +34,7 @@ const faqs = [
   },
   {
     q: "What is your cancellation policy?",
-    a: "We have a 12-hour cancellation policy to be fair to all clients. Late cancellations or missed classes will result in a lost credit.",
+    a: "We have a 12-hour cancellation policy to be fair to all clients. Cancelling or not showing up within 12 hours of your class will result in a lost credit and an AED 40 late fee.",
   },
   {
     q: "Can I arrive late to class?",
@@ -54,7 +54,7 @@ const faqs = [
   },
   {
     q: "What classes do you offer?",
-    a: "We offer Reformer Pilates, Mat Pilates, and Yoga, all designed to support both body and mind.",
+    a: "We offer Reformer Pilates, Mat Pilates, Yoga, and Sound Healing, all designed to support both body and mind.",
   },
 ];
 
