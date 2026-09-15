@@ -23,10 +23,14 @@ export interface PackageDef {
   key: PackageKey;
   name: string;
   priceId: string;
-  /** Credits granted on purchase. Absent for Unlimited Memberships —
-   * those aren't credit-based and need the membership/pass system
-   * (not built yet) before they can be sold online. */
+  /** Credits granted on purchase — for Starter/Credit packs. */
   credits?: { family: "reformer" | "mat"; amount: number };
+  /** Membership duration granted on purchase — for Unlimited
+   * Memberships. starts the day of purchase; durationDays and
+   * durationMonths are mutually exclusive (months for calendar-month
+   * tiers so "1 Month" lands on the same day next month, not a flat
+   * 30 days). */
+  membership?: { family: "reformer" | "mat"; durationDays?: number; durationMonths?: number };
 }
 
 export const packages: PackageDef[] = [
@@ -94,21 +98,25 @@ export const packages: PackageDef[] = [
     key: "membership_2weeks",
     name: "2 Weeks Unlimited",
     priceId: "price_1UFpHAEGoOlooMtk6QPYAVGB",
+    membership: { family: "reformer", durationDays: 14 },
   },
   {
     key: "membership_1month",
     name: "1 Month Unlimited",
     priceId: "price_1UFpHBEGoOlooMtkH8Zj4Wcb",
+    membership: { family: "reformer", durationMonths: 1 },
   },
   {
     key: "membership_3months",
     name: "3 Months Unlimited",
     priceId: "price_1UFpHBEGoOlooMtkHIUZuyiG",
+    membership: { family: "reformer", durationMonths: 3 },
   },
   {
     key: "membership_6months",
     name: "6 Months Unlimited",
     priceId: "price_1UFpHCEGoOlooMtkcUyey9sD",
+    membership: { family: "reformer", durationMonths: 6 },
   },
 ];
 
