@@ -476,3 +476,58 @@ export async function fetchOccupancyReport(
     byClass,
   };
 }
+
+export interface ClientMembership {
+  id: string;
+  clientId: string;
+  family: "reformer" | "mat";
+  startsAt: string;
+  endsAt: string;
+  packageName: string | null;
+}
+
+interface ClientMembershipRow {
+  id: string;
+  client_id: string;
+  family: "reformer" | "mat";
+  starts_at: string;
+  ends_at: string;
+  package_name: string | null;
+}
+
+// All memberships, keyed by client — used to show "active until X" on
+// the Clients page without a separate query per row.
+export async function fetchAllMemberships(): Promise<ClientMembership[]> {
+  const today = new Date().toISOString().slice(0, 10);
+  const { data, error } = await supabase
+    .from("client_memberships")
+    .select("*")
+    .gte("ends_at", today)
+    .order("ends_at", { ascending: true });
+  if (error) throw error;
+  return (data as ClientMembershipRow[]).map((r) => ({
+    id: r.id,
+    clientId: r.client_id,
+    family: r.family,
+    startsAt: r.starts_at,
+    endsAt: r.ends_at,
+    packageName: r.package_name,
+  }));
+}
+
+export async function grantMembership(
+  clientId: string,
+  family: "reformer" | "mat",
+  startsAt: string,
+  endsAt: string,
+  packageName: string,
+): Promise<void> {
+  const { error } = await supabase.rpc("grant_membership", {
+    p_client_id: clientId,
+    p_family: family,
+    p_starts_at: startsAt,
+    p_ends_at: endsAt,
+    p_package_name: packageName || null,
+  });
+  if (error) throw error;
+}

@@ -13,11 +13,13 @@ import {
   fetchMyBookings,
   fetchMyClient,
   fetchMyFees,
+  fetchMyMemberships,
   fetchOccurrences,
   rescheduleBooking,
   type ClientProfile,
   type MyBooking,
   type MyFee,
+  type MyMembership,
   type OccurrenceView,
 } from "@/lib/booking-db";
 
@@ -62,6 +64,7 @@ export default function AccountPage() {
   const [client, setClient] = useState<ClientProfile | null>(null);
   const [bookings, setBookings] = useState<MyBooking[]>([]);
   const [fees, setFees] = useState<MyFee[]>([]);
+  const [memberships, setMemberships] = useState<MyMembership[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
@@ -96,6 +99,9 @@ export default function AccountPage() {
       setClient(profile);
       setBookings(await fetchMyBookings());
       setFees(await fetchMyFees());
+      // Fails open: don't let a not-yet-migrated table break the whole
+      // page load — memberships are additive display, not essential.
+      setMemberships(await fetchMyMemberships().catch(() => []));
     } catch (err) {
       setError(getErrorMessage(err, "Failed to load your account."));
     } finally {
@@ -229,6 +235,23 @@ export default function AccountPage() {
             <p className="mt-1.5 text-[11.5px] text-status-warning">
               Please settle this at the studio.
             </p>
+          </div>
+        )}
+
+        {memberships.length > 0 && (
+          <div className="mt-5 flex flex-wrap gap-2">
+            {memberships.map((m) => (
+              <span
+                key={m.family}
+                className="rounded-full bg-accent-soft px-3 py-1.5 text-[12.5px] font-bold text-accent-strong"
+              >
+                {m.family === "reformer" ? "Reformer" : "Mat"} Unlimited &middot; until{" "}
+                {new Date(`${m.endsAt}T00:00:00`).toLocaleDateString(undefined, {
+                  day: "numeric",
+                  month: "short",
+                })}
+              </span>
+            ))}
           </div>
         )}
 

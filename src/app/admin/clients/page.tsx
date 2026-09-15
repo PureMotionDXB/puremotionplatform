@@ -7,12 +7,15 @@ import { getErrorMessage } from "@/lib/schedule-data";
 import {
   adjustCredits,
   fetchAllClients,
+  fetchAllMemberships,
   fetchMyStaffInfo,
   fetchOutstandingFees,
+  grantMembership,
   resolveFee,
   setClientStatus,
   type AdminClient,
   type ClientAccountStatus,
+  type ClientMembership,
   type OutstandingFee,
 } from "@/lib/admin-db";
 
@@ -40,6 +43,7 @@ const statusTone: Record<ClientAccountStatus, string> = {
 export default function AdminClientsPage() {
   const router = useRouter();
   const [clients, setClients] = useState<AdminClient[]>([]);
+  const [memberships, setMemberships] = useState<ClientMembership[]>([]);
   const [fees, setFees] = useState<OutstandingFee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +58,12 @@ export default function AdminClientsPage() {
   const [statusDraft, setStatusDraft] = useState<ClientAccountStatus>("active");
   const [statusReasonDraft, setStatusReasonDraft] = useState("");
   const [savingStatus, setSavingStatus] = useState(false);
+  const [membershipEditingId, setMembershipEditingId] = useState<string | null>(null);
+  const [membershipFamily, setMembershipFamily] = useState<Family>("reformer");
+  const [membershipStart, setMembershipStart] = useState("");
+  const [membershipEnd, setMembershipEnd] = useState("");
+  const [membershipPackage, setMembershipPackage] = useState("");
+  const [savingMembership, setSavingMembership] = useState(false);
 
   useEffect(() => {
     fetchMyStaffInfo().then((info) => {
@@ -71,6 +81,9 @@ export default function AdminClientsPage() {
     try {
       setClients(await fetchAllClients());
       setFees(await fetchOutstandingFees());
+      // Fails open: don't let a not-yet-migrated table break the whole
+      // page load — memberships are additive display, not essential.
+      setMemberships(await fetchAllMemberships().catch(() => []));
     } catch (err) {
       setError(getErrorMessage(err, "Failed to load clients."));
     } finally {
@@ -109,6 +122,36 @@ export default function AdminClientsPage() {
       setError(getErrorMessage(err, "Failed to update the account status."));
     } finally {
       setSavingStatus(false);
+    }
+  }
+
+  function startGrantMembership(clientId: string) {
+    setMembershipEditingId(clientId);
+    setMembershipFamily("reformer");
+    const today = new Date().toISOString().slice(0, 10);
+    setMembershipStart(today);
+    setMembershipEnd(today);
+    setMembershipPackage("");
+  }
+
+  async function saveMembership() {
+    if (!membershipEditingId || savingMembership) return;
+    setSavingMembership(true);
+    setError(null);
+    try {
+      await grantMembership(
+        membershipEditingId,
+        membershipFamily,
+        membershipStart,
+        membershipEnd,
+        membershipPackage,
+      );
+      await load();
+      setMembershipEditingId(null);
+    } catch (err) {
+      setError(getErrorMessage(err, "Failed to grant the membership."));
+    } finally {
+      setSavingMembership(false);
     }
   }
 
@@ -219,6 +262,7 @@ export default function AdminClientsPage() {
                   <th className="px-3 py-2.5">Status</th>
                   <th className="px-3 py-2.5">Reformer</th>
                   <th className="px-3 py-2.5">Mat</th>
+                  <th className="px-3 py-2.5">Membership</th>
                   <th className="px-3 py-2.5"></th>
                 </tr>
               </thead>
@@ -237,6 +281,21 @@ export default function AdminClientsPage() {
                       </td>
                       <td className="px-3 py-2.5 font-mono">{c.reformerCredits}</td>
                       <td className="px-3 py-2.5 font-mono">{c.matCredits}</td>
+                      <td className="px-3 py-2.5">
+                        {(() => {
+                          const m = memberships.find((mem) => mem.clientId === c.id);
+                          if (!m) return <span className="text-muted">—</span>;
+                          return (
+                            <span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-[11px] font-bold text-accent-strong">
+                              {m.family === "reformer" ? "Reformer" : "Mat"} until{" "}
+                              {new Date(`${m.endsAt}T00:00:00`).toLocaleDateString(undefined, {
+                                day: "numeric",
+                                month: "short",
+                              })}
+                            </span>
+                          );
+                        })()}
+                      </td>
                       <td className="px-3 py-2.5 text-right">
                         <div className="flex justify-end gap-3">
                           <Link
@@ -252,6 +311,12 @@ export default function AdminClientsPage() {
                             Adjust credits
                           </button>
                           <button
+                            onClick={() => startGrantMembership(c.id)}
+                            className="text-[12px] font-bold text-accent-strong hover:underline"
+                          >
+                            Grant membership
+                          </button>
+                          <button
                             onClick={() => startStatusEdit(c)}
                             className="text-[12px] font-bold text-ink-secondary hover:underline"
                           >
@@ -260,9 +325,80 @@ export default function AdminClientsPage() {
                         </div>
                       </td>
                     </tr>
+                    {membershipEditingId === c.id && (
+                      <tr key={`${c.id}-membership-form`} className="border-b border-border bg-surface-2">
+                        <td colSpan={7} className="p-4">
+                          <div className="flex flex-wrap items-end gap-3">
+                            <label className="flex flex-col gap-1.5">
+                              <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
+                                Family
+                              </span>
+                              <select
+                                className="field-input"
+                                value={membershipFamily}
+                                onChange={(e) => setMembershipFamily(e.target.value as Family)}
+                              >
+                                <option value="reformer">Reformer</option>
+                                <option value="mat">Mat</option>
+                              </select>
+                            </label>
+                            <label className="flex flex-col gap-1.5">
+                              <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
+                                Starts
+                              </span>
+                              <input
+                                type="date"
+                                className="field-input"
+                                value={membershipStart}
+                                onChange={(e) => setMembershipStart(e.target.value)}
+                              />
+                            </label>
+                            <label className="flex flex-col gap-1.5">
+                              <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
+                                Ends
+                              </span>
+                              <input
+                                type="date"
+                                className="field-input"
+                                value={membershipEnd}
+                                onChange={(e) => setMembershipEnd(e.target.value)}
+                              />
+                            </label>
+                            <label className="flex min-w-[180px] flex-1 flex-col gap-1.5">
+                              <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
+                                Package (optional)
+                              </span>
+                              <input
+                                className="field-input"
+                                placeholder="e.g. 1 Month Unlimited"
+                                value={membershipPackage}
+                                onChange={(e) => setMembershipPackage(e.target.value)}
+                              />
+                            </label>
+                            <button
+                              onClick={saveMembership}
+                              disabled={savingMembership}
+                              className="rounded-[9px] bg-accent-strong px-4 py-2.5 text-[13px] font-bold text-accent-ink hover:brightness-110 disabled:opacity-50"
+                            >
+                              {savingMembership ? "Saving…" : "Grant"}
+                            </button>
+                            <button
+                              onClick={() => setMembershipEditingId(null)}
+                              className="rounded-[9px] border border-border-strong px-4 py-2.5 text-[13px] font-bold text-ink hover:bg-surface"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                          <p className="mt-2.5 text-[12px] text-muted">
+                            While this covers a class&rsquo;s date, {c.fullName || "this client"}{" "}
+                            books that family (Reformer or Mat) with no credit deducted.
+                          </p>
+                        </td>
+                      </tr>
+                    )}
                     {statusEditingId === c.id && (
                       <tr key={`${c.id}-status-form`} className="border-b border-border bg-surface-2">
-                        <td colSpan={6} className="p-4">
+                        <td colSpan={7} className="p-4">
                           <div className="flex flex-wrap items-end gap-3">
                             <label className="flex flex-col gap-1.5">
                               <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
@@ -319,7 +455,7 @@ export default function AdminClientsPage() {
                     )}
                     {adjustingId === c.id && (
                       <tr key={`${c.id}-form`} className="border-b border-border bg-surface-2">
-                        <td colSpan={6} className="p-4">
+                        <td colSpan={7} className="p-4">
                           <div className="flex flex-wrap items-end gap-3">
                             <label className="flex flex-col gap-1.5">
                               <span className="text-[11px] font-bold uppercase tracking-wide text-muted">

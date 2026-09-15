@@ -325,3 +325,30 @@ export async function fetchMyFees(): Promise<MyFee[]> {
     amountAed: r.amount_aed,
   }));
 }
+
+export interface MyMembership {
+  family: "reformer" | "mat";
+  endsAt: string;
+}
+
+interface MyMembershipRow {
+  family: "reformer" | "mat";
+  ends_at: string;
+}
+
+// Active memberships covering today or later, for display on /account.
+// Booking-time validity is checked server-side by has_active_membership().
+export async function fetchMyMemberships(): Promise<MyMembership[]> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+  const today = new Date().toISOString().slice(0, 10);
+  const { data, error } = await supabase
+    .from("client_memberships")
+    .select("family, ends_at")
+    .eq("client_id", user.id)
+    .gte("ends_at", today);
+  if (error) throw error;
+  return (data as MyMembershipRow[]).map((r) => ({ family: r.family, endsAt: r.ends_at }));
+}
