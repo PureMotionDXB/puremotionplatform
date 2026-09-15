@@ -161,9 +161,26 @@ interface ClientRow {
   phone: string | null;
   gender: "female" | "male" | "unspecified";
   date_of_birth: string | null;
-  reformer_credits: number;
-  mat_credits: number;
   account_status: ClientAccountStatus;
+}
+
+// Credits moved from two fixed columns on `clients` to a per-category
+// ledger table (client_credits) so new categories can be added later
+// without a schema change. This is the one adapter point that reads
+// it back into the same reformerCredits/matCredits shape the rest of
+// the app already expects — no other file needs to know the storage
+// changed.
+async function fetchCreditsFor(clientId: string): Promise<{ reformerCredits: number; matCredits: number }> {
+  const { data, error } = await supabase
+    .from("client_credits")
+    .select("family, credits")
+    .eq("client_id", clientId);
+  if (error) throw error;
+  const rows = (data ?? []) as { family: string; credits: number }[];
+  return {
+    reformerCredits: rows.find((r) => r.family === "reformer")?.credits ?? 0,
+    matCredits: rows.find((r) => r.family === "mat")?.credits ?? 0,
+  };
 }
 
 // Signup can't always write the clients row immediately (Supabase may
@@ -186,14 +203,14 @@ export async function fetchMyClient(): Promise<ClientProfile | null> {
 
   if (data) {
     const row = data as ClientRow;
+    const credits = await fetchCreditsFor(row.id);
     return {
       id: row.id,
       fullName: row.full_name,
       phone: row.phone,
       gender: row.gender,
       dateOfBirth: row.date_of_birth,
-      reformerCredits: row.reformer_credits,
-      matCredits: row.mat_credits,
+      ...credits,
       accountStatus: row.account_status ?? "active",
     };
   }
@@ -239,14 +256,14 @@ export async function fetchMyClient(): Promise<ClientProfile | null> {
     if (fetchError) throw fetchError;
     row = existing as ClientRow;
   }
+  const credits = await fetchCreditsFor(row.id);
   return {
     id: row.id,
     fullName: row.full_name,
     phone: row.phone,
     gender: row.gender,
     dateOfBirth: row.date_of_birth,
-    reformerCredits: row.reformer_credits,
-    matCredits: row.mat_credits,
+    ...credits,
     accountStatus: row.account_status ?? "active",
   };
 }

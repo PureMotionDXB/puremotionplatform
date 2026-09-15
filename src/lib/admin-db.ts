@@ -42,27 +42,33 @@ interface AdminClientRow {
   full_name: string;
   phone: string | null;
   gender: string;
-  reformer_credits: number;
-  mat_credits: number;
   created_at: string;
   account_status: ClientAccountStatus;
   status_reason: string | null;
   status_updated_at: string | null;
 }
 
+// Credits moved from two fixed columns on `clients` to a per-category
+// ledger table (client_credits). This is the one adapter point that
+// reads it back into the same reformerCredits/matCredits shape every
+// admin page already expects.
 export async function fetchAllClients(): Promise<AdminClient[]> {
-  const { data, error } = await supabase
-    .from("clients")
-    .select("*")
-    .order("full_name", { ascending: true });
+  const [{ data, error }, { data: creditRows, error: creditError }] = await Promise.all([
+    supabase.from("clients").select("*").order("full_name", { ascending: true }),
+    supabase.from("client_credits").select("client_id, family, credits"),
+  ]);
   if (error) throw error;
+  if (creditError) throw creditError;
+
+  const credits = (creditRows ?? []) as { client_id: string; family: string; credits: number }[];
+
   return (data as AdminClientRow[]).map((row) => ({
     id: row.id,
     fullName: row.full_name,
     phone: row.phone,
     gender: row.gender,
-    reformerCredits: row.reformer_credits,
-    matCredits: row.mat_credits,
+    reformerCredits: credits.find((c) => c.client_id === row.id && c.family === "reformer")?.credits ?? 0,
+    matCredits: credits.find((c) => c.client_id === row.id && c.family === "mat")?.credits ?? 0,
     createdAt: row.created_at,
     accountStatus: row.account_status ?? "active",
     statusReason: row.status_reason,
