@@ -7,7 +7,6 @@ import { supabase } from "@/lib/supabase";
 
 const menuLinks = [
   { href: "/", label: "Home" },
-  { href: "/schedule", label: "Schedule" },
   { href: "/schedule", label: "Book a Class" },
   { href: "/pricing", label: "Packages" },
   { href: "/membership-benefits", label: "Membership Benefits" },

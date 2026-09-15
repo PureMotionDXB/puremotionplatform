@@ -13,9 +13,17 @@ import {
   cancelBooking,
   ensureOccurrences,
   fetchMyClient,
+  fetchMyMemberships,
   fetchOccurrences,
+  type ClientProfile,
+  type MyMembership,
   type OccurrenceView,
 } from "@/lib/booking-db";
+import { fetchSingleClassPrices } from "@/lib/packages-db";
+
+function formatAed(priceAed: number): string {
+  return `AED ${Math.round(priceAed).toLocaleString()}`;
+}
 
 const DAYS_AHEAD = 14;
 
@@ -63,10 +71,15 @@ function ScheduleContent() {
   );
   const [occurrences, setOccurrences] = useState<OccurrenceView[]>([]);
   const [instructors, setInstructors] = useState<Instructor[]>([]);
-  const [signedIn, setSignedIn] = useState(false);
+  const [client, setClient] = useState<ClientProfile | null>(null);
+  const [memberships, setMemberships] = useState<MyMembership[]>([]);
+  const [singleClassPrices, setSingleClassPrices] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [justBooked, setJustBooked] = useState(searchParams.get("booked") === "success");
+
+  const signedIn = client !== null;
 
   useEffect(() => {
     load();
@@ -77,18 +90,47 @@ function ScheduleContent() {
     setError(null);
     try {
       await ensureOccurrences();
-      const [occurrenceData, instructorData, client] = await Promise.all([
+      const [occurrenceData, instructorData, clientData, membershipData, priceData] = await Promise.all([
         fetchOccurrences(dates[0], dates[dates.length - 1]),
         fetchInstructors(),
         fetchMyClient(),
+        fetchMyMemberships(),
+        fetchSingleClassPrices(),
       ]);
       setOccurrences(occurrenceData);
       setInstructors(instructorData);
-      setSignedIn(client !== null);
+      setClient(clientData);
+      setMemberships(membershipData);
+      setSingleClassPrices(priceData);
     } catch (err) {
       setError(getErrorMessage(err, "Failed to load the schedule."));
     } finally {
       setLoading(false);
+    }
+  }
+
+  function canBookFree(family: "reformer" | "mat"): boolean {
+    if (!client) return false;
+    if (memberships.some((m) => m.family === family)) return true;
+    const credits = family === "reformer" ? client.reformerCredits : client.matCredits;
+    return credits >= 1;
+  }
+
+  async function handlePayAndBook(occurrenceId: string) {
+    setBusyId(occurrenceId);
+    setError(null);
+    try {
+      const res = await fetch("/api/checkout/create-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ occurrenceId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to start checkout");
+      window.location.href = data.url;
+    } catch (err) {
+      setError(getErrorMessage(err, "Failed to start checkout."));
+      setBusyId(null);
     }
   }
 
@@ -110,12 +152,12 @@ function ScheduleContent() {
     setError(null);
     try {
       await bookClass(occurrenceId);
-      const [occurrenceData, client] = await Promise.all([
+      const [occurrenceData, clientData] = await Promise.all([
         fetchOccurrences(dates[0], dates[dates.length - 1]),
         fetchMyClient(),
       ]);
       setOccurrences(occurrenceData);
-      setSignedIn(client !== null);
+      setClient(clientData);
     } catch (err) {
       setError(getErrorMessage(err, "Failed to book this class."));
     } finally {
@@ -146,6 +188,15 @@ function ScheduleContent() {
         <p className="mt-1 text-[13px] text-muted">
           Reformer beds fill up fast — grab your spot ahead of time.
         </p>
+
+        {justBooked && (
+          <div className="mt-5 flex items-center justify-between rounded-2xl border border-status-good bg-status-good-soft p-4 text-[13px] text-status-good">
+            <span>Payment received — you&apos;re booked in.</span>
+            <button onClick={() => setJustBooked(false)} className="font-bold hover:underline">
+              Dismiss
+            </button>
+          </div>
+        )}
 
         {error && (
           <div className="mt-5 rounded-2xl border border-status-critical bg-status-critical-soft p-4 text-[13px] text-status-critical">
@@ -254,6 +305,27 @@ function ScheduleContent() {
                     className="w-full shrink-0 rounded-[9px] border border-border-strong px-4 py-2 text-[13px] font-bold text-muted opacity-60 sm:w-auto"
                   >
                     Full
+                  </button>
+                );
+              } else if (!canBookFree(occ.family) && singleClassPrices[occ.family] != null) {
+                action = (
+                  <button
+                    onClick={() => handlePayAndBook(occ.occurrenceId)}
+                    disabled={busy}
+                    className="w-full shrink-0 rounded-[9px] bg-accent-strong px-4 py-2 text-[13px] font-bold text-accent-ink transition hover:brightness-110 disabled:opacity-50 sm:w-auto"
+                  >
+                    {busy
+                      ? "Redirecting…"
+                      : `Pay ${formatAed(singleClassPrices[occ.family])} & ${full ? "join waitlist" : "book"}`}
+                  </button>
+                );
+              } else if (!canBookFree(occ.family)) {
+                action = (
+                  <button
+                    disabled
+                    className="w-full shrink-0 rounded-[9px] border border-border-strong px-4 py-2 text-[13px] font-bold text-muted opacity-60 sm:w-auto"
+                  >
+                    Not available for purchase
                   </button>
                 );
               } else {

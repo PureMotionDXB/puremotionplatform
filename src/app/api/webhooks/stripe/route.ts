@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { findPackage } from "@/lib/stripe-catalog";
 
 // Manual signature verification (no `stripe` package) — same
 // approach as the rest of this app's Stripe integration. Stripe's
@@ -58,50 +57,56 @@ export async function POST(request: Request) {
 
   const session = event.data.object;
   const clientId: string | undefined = session.metadata?.client_id;
-  const packageKey: string | undefined = session.metadata?.package_key;
-  if (!clientId || !packageKey) {
+  const packageId: string | undefined = session.metadata?.package_id;
+  if (!clientId || !packageId) {
     return NextResponse.json({ error: "Missing metadata on session" }, { status: 400 });
-  }
-
-  const pkg = findPackage(packageKey);
-  if (!pkg) {
-    return NextResponse.json({ error: "Unknown package in session metadata" }, { status: 400 });
   }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-  if (pkg.credits) {
-    const column = pkg.credits.family === "reformer" ? "reformer_credits" : "mat_credits";
-    const { data: client, error: fetchError } = await supabase
-      .from("clients")
-      .select(column)
-      .eq("id", clientId)
-      .maybeSingle();
-    if (fetchError || !client) {
-      return NextResponse.json({ error: "Client not found" }, { status: 404 });
-    }
-    const current = (client as unknown as Record<string, number>)[column] ?? 0;
-    const { error: updateError } = await supabase
-      .from("clients")
-      .update({ [column]: current + pkg.credits.amount })
-      .eq("id", clientId);
-    if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
+  // Service-role client, so this sees archived packages too — correct,
+  // in case a package was archived between purchase and webhook delivery.
+  const { data: pkg, error: pkgError } = await supabase
+    .from("packages")
+    .select("*")
+    .eq("id", packageId)
+    .maybeSingle();
+  if (pkgError || !pkg) {
+    return NextResponse.json({ error: "Unknown package in session metadata" }, { status: 400 });
+  }
+
+  if (pkg.kind === "credits") {
+    const { error: grantError } = await supabase.rpc("grant_credits_for_client", {
+      p_client_id: clientId,
+      p_family: pkg.family,
+      p_amount: pkg.credit_amount,
+      p_reason: `Online purchase: ${pkg.name} (Stripe)`,
+    });
+    if (grantError) {
+      return NextResponse.json({ error: grantError.message }, { status: 500 });
     }
 
-    await supabase.from("credit_adjustments").insert({
-      client_id: clientId,
-      family: pkg.credits.family,
-      delta: pkg.credits.amount,
-      reason: `Online purchase: ${pkg.name} (Stripe)`,
-      created_by: clientId,
-    });
-  } else if (pkg.membership) {
+    // "Pay for this exact class" flow — the credit above already
+    // landed, so if the booking itself fails (e.g. the class filled
+    // up between checkout and payment completing) the client still
+    // keeps the credit and can book manually; nothing is lost, so
+    // this is logged rather than failing the whole webhook.
+    const occurrenceId: string | undefined = session.metadata?.occurrence_id;
+    if (occurrenceId) {
+      const { error: bookError } = await supabase.rpc("book_class_for_client", {
+        p_client_id: clientId,
+        p_occurrence_id: occurrenceId,
+      });
+      if (bookError) {
+        console.error("book_class_for_client failed after credit grant:", bookError.message);
+      }
+    }
+  } else if (pkg.kind === "membership") {
     const startsAt = new Date().toISOString().slice(0, 10);
-    const endsAt = addDuration(startsAt, pkg.membership.durationDays, pkg.membership.durationMonths);
+    const endsAt = addDuration(startsAt, pkg.duration_days ?? undefined, pkg.duration_months ?? undefined);
     const { error: insertError } = await supabase.from("client_memberships").insert({
       client_id: clientId,
-      family: pkg.membership.family,
+      family: pkg.family,
       starts_at: startsAt,
       ends_at: endsAt,
       package_name: pkg.name,
