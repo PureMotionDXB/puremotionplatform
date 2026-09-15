@@ -22,7 +22,7 @@ export default function AdminLoginPage() {
       setLoading(false);
       return;
     }
-    router.push("/admin/schedule");
+    router.push("/admin/dashboard");
     router.refresh();
   }
 

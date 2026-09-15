@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { fetchMyStaffInfo, type StaffInfo } from "@/lib/admin-db";
 
 const ownerNavLinks = [
+  { href: "/admin/dashboard", label: "Dashboard" },
   { href: "/admin/schedule", label: "Schedule" },
   { href: "/admin/roster", label: "Roster" },
   { href: "/admin/book", label: "Book for client" },
@@ -18,6 +19,7 @@ const ownerNavLinks = [
 ];
 
 const adminNavLinks = [
+  { href: "/admin/dashboard", label: "Dashboard" },
   { href: "/admin/schedule", label: "Schedule" },
   { href: "/admin/roster", label: "Roster" },
   { href: "/admin/book", label: "Book for client" },

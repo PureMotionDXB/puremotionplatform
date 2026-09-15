@@ -38,7 +38,7 @@ export async function proxy(request: NextRequest) {
 
   if (isLoginRoute && user) {
     const url = request.nextUrl.clone();
-    url.pathname = "/admin/schedule";
+    url.pathname = "/admin/dashboard";
     return NextResponse.redirect(url);
   }
 

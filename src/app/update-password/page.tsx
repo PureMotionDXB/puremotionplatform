@@ -59,7 +59,7 @@ export default function UpdatePasswordPage() {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
       const staffInfo = await fetchMyStaffInfo();
-      router.push(staffInfo ? "/admin/schedule" : "/account");
+      router.push(staffInfo ? "/admin/dashboard" : "/account");
       router.refresh();
     } catch (err) {
       setError(getErrorMessage(err, "Failed to update your password."));
