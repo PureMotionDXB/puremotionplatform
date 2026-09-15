@@ -22,6 +22,8 @@ export async function fetchMyStaffInfo(): Promise<StaffInfo | null> {
   return { role: data.role, instructorId: data.instructor_id };
 }
 
+export type ClientAccountStatus = "active" | "paused" | "suspended" | "terminated";
+
 export interface AdminClient {
   id: string;
   fullName: string;
@@ -30,6 +32,9 @@ export interface AdminClient {
   reformerCredits: number;
   matCredits: number;
   createdAt: string;
+  accountStatus: ClientAccountStatus;
+  statusReason: string | null;
+  statusUpdatedAt: string | null;
 }
 
 interface AdminClientRow {
@@ -40,6 +45,9 @@ interface AdminClientRow {
   reformer_credits: number;
   mat_credits: number;
   created_at: string;
+  account_status: ClientAccountStatus;
+  status_reason: string | null;
+  status_updated_at: string | null;
 }
 
 export async function fetchAllClients(): Promise<AdminClient[]> {
@@ -56,7 +64,23 @@ export async function fetchAllClients(): Promise<AdminClient[]> {
     reformerCredits: row.reformer_credits,
     matCredits: row.mat_credits,
     createdAt: row.created_at,
+    accountStatus: row.account_status ?? "active",
+    statusReason: row.status_reason,
+    statusUpdatedAt: row.status_updated_at,
   }));
+}
+
+export async function setClientStatus(
+  clientId: string,
+  status: ClientAccountStatus,
+  reason: string,
+): Promise<void> {
+  const { error } = await supabase.rpc("set_client_status", {
+    p_client_id: clientId,
+    p_status: status,
+    p_reason: reason || null,
+  });
+  if (error) throw error;
 }
 
 export async function adjustCredits(

@@ -200,6 +200,20 @@ export default function AccountPage() {
           </div>
         )}
 
+        {client.accountStatus !== "active" && (
+          <div className="mt-4 rounded-2xl border border-status-critical bg-status-critical-soft p-4">
+            <div className="text-[12.5px] font-bold text-status-critical">
+              {client.accountStatus === "paused" && "Your account is currently paused."}
+              {client.accountStatus === "suspended" && "Your account is currently suspended."}
+              {client.accountStatus === "terminated" && "This account is no longer active."}
+            </div>
+            <p className="mt-1 text-[11.5px] text-status-critical">
+              You won&rsquo;t be able to book new classes until this is resolved. Please
+              contact the studio.
+            </p>
+          </div>
+        )}
+
         {fees.length > 0 && (
           <div className="mt-4 rounded-2xl border border-status-warning bg-status-warning-soft p-4">
             <div className="text-[12.5px] font-bold text-status-warning">

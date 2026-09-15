@@ -142,6 +142,8 @@ export async function rescheduleBooking(
   return result;
 }
 
+export type ClientAccountStatus = "active" | "paused" | "suspended" | "terminated";
+
 export interface ClientProfile {
   id: string;
   fullName: string;
@@ -150,6 +152,7 @@ export interface ClientProfile {
   dateOfBirth: string | null;
   reformerCredits: number;
   matCredits: number;
+  accountStatus: ClientAccountStatus;
 }
 
 interface ClientRow {
@@ -160,6 +163,7 @@ interface ClientRow {
   date_of_birth: string | null;
   reformer_credits: number;
   mat_credits: number;
+  account_status: ClientAccountStatus;
 }
 
 // Signup can't always write the clients row immediately (Supabase may
@@ -190,6 +194,7 @@ export async function fetchMyClient(): Promise<ClientProfile | null> {
       dateOfBirth: row.date_of_birth,
       reformerCredits: row.reformer_credits,
       matCredits: row.mat_credits,
+      accountStatus: row.account_status ?? "active",
     };
   }
 
@@ -242,6 +247,7 @@ export async function fetchMyClient(): Promise<ClientProfile | null> {
     dateOfBirth: row.date_of_birth,
     reformerCredits: row.reformer_credits,
     matCredits: row.mat_credits,
+    accountStatus: row.account_status ?? "active",
   };
 }
 

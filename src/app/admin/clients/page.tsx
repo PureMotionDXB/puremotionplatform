@@ -10,7 +10,9 @@ import {
   fetchMyStaffInfo,
   fetchOutstandingFees,
   resolveFee,
+  setClientStatus,
   type AdminClient,
+  type ClientAccountStatus,
   type OutstandingFee,
 } from "@/lib/admin-db";
 
@@ -19,6 +21,20 @@ type Family = "reformer" | "mat";
 const feeReasonLabel: Record<string, string> = {
   no_show: "No-show",
   late_cancel: "Late cancellation",
+};
+
+const statusLabel: Record<ClientAccountStatus, string> = {
+  active: "Active",
+  paused: "Paused",
+  suspended: "Suspended",
+  terminated: "Terminated",
+};
+
+const statusTone: Record<ClientAccountStatus, string> = {
+  active: "bg-status-good-soft text-status-good",
+  paused: "bg-status-warning-soft text-status-warning",
+  suspended: "bg-status-critical-soft text-status-critical",
+  terminated: "bg-surface-2 text-muted",
 };
 
 export default function AdminClientsPage() {
@@ -34,6 +50,10 @@ export default function AdminClientsPage() {
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
   const [resolvingFeeId, setResolvingFeeId] = useState<string | null>(null);
+  const [statusEditingId, setStatusEditingId] = useState<string | null>(null);
+  const [statusDraft, setStatusDraft] = useState<ClientAccountStatus>("active");
+  const [statusReasonDraft, setStatusReasonDraft] = useState("");
+  const [savingStatus, setSavingStatus] = useState(false);
 
   useEffect(() => {
     fetchMyStaffInfo().then((info) => {
@@ -68,6 +88,27 @@ export default function AdminClientsPage() {
       setError(getErrorMessage(err, "Failed to update the fee."));
     } finally {
       setResolvingFeeId(null);
+    }
+  }
+
+  function startStatusEdit(c: AdminClient) {
+    setStatusEditingId(c.id);
+    setStatusDraft(c.accountStatus);
+    setStatusReasonDraft(c.statusReason ?? "");
+  }
+
+  async function saveStatus() {
+    if (!statusEditingId || savingStatus) return;
+    setSavingStatus(true);
+    setError(null);
+    try {
+      await setClientStatus(statusEditingId, statusDraft, statusReasonDraft);
+      await load();
+      setStatusEditingId(null);
+    } catch (err) {
+      setError(getErrorMessage(err, "Failed to update the account status."));
+    } finally {
+      setSavingStatus(false);
     }
   }
 
@@ -175,6 +216,7 @@ export default function AdminClientsPage() {
                 <tr className="border-b border-border text-left text-[11px] font-bold uppercase tracking-wide text-muted">
                   <th className="px-3 py-2.5">Name</th>
                   <th className="px-3 py-2.5">Phone</th>
+                  <th className="px-3 py-2.5">Status</th>
                   <th className="px-3 py-2.5">Reformer</th>
                   <th className="px-3 py-2.5">Mat</th>
                   <th className="px-3 py-2.5"></th>
@@ -186,6 +228,13 @@ export default function AdminClientsPage() {
                     <tr className="border-b border-border last:border-none">
                       <td className="px-3 py-2.5 font-semibold">{c.fullName || "—"}</td>
                       <td className="px-3 py-2.5 text-ink-secondary">{c.phone || "—"}</td>
+                      <td className="px-3 py-2.5">
+                        <span
+                          className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${statusTone[c.accountStatus]}`}
+                        >
+                          {statusLabel[c.accountStatus]}
+                        </span>
+                      </td>
                       <td className="px-3 py-2.5 font-mono">{c.reformerCredits}</td>
                       <td className="px-3 py-2.5 font-mono">{c.matCredits}</td>
                       <td className="px-3 py-2.5 text-right">
@@ -194,7 +243,7 @@ export default function AdminClientsPage() {
                             href={`/admin/book?client=${c.id}`}
                             className="text-[12px] font-bold text-accent-strong hover:underline"
                           >
-                            Book a class
+                            Book / cancel
                           </Link>
                           <button
                             onClick={() => startAdjust(c.id)}
@@ -202,12 +251,75 @@ export default function AdminClientsPage() {
                           >
                             Adjust credits
                           </button>
+                          <button
+                            onClick={() => startStatusEdit(c)}
+                            className="text-[12px] font-bold text-ink-secondary hover:underline"
+                          >
+                            Change status
+                          </button>
                         </div>
                       </td>
                     </tr>
+                    {statusEditingId === c.id && (
+                      <tr key={`${c.id}-status-form`} className="border-b border-border bg-surface-2">
+                        <td colSpan={6} className="p-4">
+                          <div className="flex flex-wrap items-end gap-3">
+                            <label className="flex flex-col gap-1.5">
+                              <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
+                                Status
+                              </span>
+                              <select
+                                className="field-input"
+                                value={statusDraft}
+                                onChange={(e) =>
+                                  setStatusDraft(e.target.value as ClientAccountStatus)
+                                }
+                              >
+                                <option value="active">Active</option>
+                                <option value="paused">Paused</option>
+                                <option value="suspended">Suspended</option>
+                                <option value="terminated">Terminated</option>
+                              </select>
+                            </label>
+                            <label className="flex min-w-[220px] flex-1 flex-col gap-1.5">
+                              <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
+                                Reason (optional)
+                              </span>
+                              <input
+                                className="field-input"
+                                placeholder="e.g. Requested a 1-month travel pause"
+                                value={statusReasonDraft}
+                                onChange={(e) => setStatusReasonDraft(e.target.value)}
+                              />
+                            </label>
+                            <button
+                              onClick={saveStatus}
+                              disabled={savingStatus}
+                              className="rounded-[9px] bg-accent-strong px-4 py-2.5 text-[13px] font-bold text-accent-ink hover:brightness-110 disabled:opacity-50"
+                            >
+                              {savingStatus ? "Saving…" : "Save"}
+                            </button>
+                            <button
+                              onClick={() => setStatusEditingId(null)}
+                              className="rounded-[9px] border border-border-strong px-4 py-2.5 text-[13px] font-bold text-ink hover:bg-surface"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                          {statusDraft !== "active" && (
+                            <p className="mt-2.5 text-[12px] text-muted">
+                              While in this state, {c.fullName || "this client"} won&rsquo;t be
+                              able to book new classes (self-service or front-desk). Existing
+                              upcoming bookings are unaffected — cancel those separately via
+                              &ldquo;Book / cancel&rdquo; if needed.
+                            </p>
+                          )}
+                        </td>
+                      </tr>
+                    )}
                     {adjustingId === c.id && (
                       <tr key={`${c.id}-form`} className="border-b border-border bg-surface-2">
-                        <td colSpan={5} className="p-4">
+                        <td colSpan={6} className="p-4">
                           <div className="flex flex-wrap items-end gap-3">
                             <label className="flex flex-col gap-1.5">
                               <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
