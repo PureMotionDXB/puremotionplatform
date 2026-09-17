@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -23,7 +23,11 @@ function formatAed(priceAed: number): string {
   return `AED ${Math.round(priceAed).toLocaleString()}`;
 }
 
-function Card({
+// A tappable list row — one pass, its detail, and its price, in a
+// single scannable line. Matches the "Select a pass" list pattern
+// (name + subtitle on the left, price on the right) rather than a
+// card grid, so a long list of options stays easy to scan at a glance.
+function Row({
   pkg,
   signedIn,
   busy,
@@ -34,30 +38,46 @@ function Card({
   busy: boolean;
   onBuy: (id: string) => void;
 }) {
-  return (
-    <div className="flex flex-col rounded-2xl border border-border bg-surface p-5">
-      <h3 className="font-display text-[15px] font-bold text-ink">{pkg.name}</h3>
-      <div className="mt-2 font-display text-[22px] font-bold text-accent-strong">
-        {formatAed(pkg.priceAed)} <span className="text-[13px] font-semibold text-muted">+ VAT</span>
+  const subtitle = [pkg.detail, pkg.note].filter(Boolean).join(" · ");
+  const inner = (
+    <>
+      <div className="flex min-w-0 flex-col">
+        <span className="truncate text-[14px] font-bold text-ink">{pkg.name}</span>
+        {subtitle && <span className="truncate text-[12px] text-muted">{subtitle}</span>}
       </div>
-      {pkg.detail && <p className="mt-1.5 text-[13px] text-ink-secondary">{pkg.detail}</p>}
-      {pkg.note && <p className="mt-1 text-[11.5px] text-muted">{pkg.note}</p>}
-      {signedIn ? (
-        <button
-          onClick={() => onBuy(pkg.id)}
-          disabled={busy}
-          className="mt-4 rounded-[9px] bg-accent-strong px-4 py-2.5 text-[13px] font-bold text-accent-ink transition hover:brightness-110 disabled:opacity-50"
-        >
-          {busy ? "Redirecting…" : "Buy now"}
-        </button>
-      ) : (
-        <Link
-          href="/account/login"
-          className="mt-4 rounded-[9px] bg-accent-strong px-4 py-2.5 text-center text-[13px] font-bold text-accent-ink transition hover:brightness-110"
-        >
-          Sign in to buy
-        </Link>
-      )}
+      <div className="flex shrink-0 items-center gap-2 pl-3">
+        <div className="flex flex-col items-end">
+          <span className="text-[15px] font-bold text-accent-strong">
+            {busy ? "Redirecting…" : formatAed(pkg.priceAed)}
+          </span>
+          {!busy && <span className="text-[10px] font-semibold text-muted">+ VAT</span>}
+        </div>
+        {!busy && <span className="text-[18px] leading-none text-muted">&rsaquo;</span>}
+      </div>
+    </>
+  );
+
+  const rowClasses =
+    "flex w-full items-center justify-between gap-3 border-b border-border px-4 py-3.5 text-left transition hover:bg-surface-2 last:border-none disabled:opacity-50";
+
+  if (!signedIn) {
+    return (
+      <Link href="/account/login" className={rowClasses}>
+        {inner}
+      </Link>
+    );
+  }
+  return (
+    <button onClick={() => onBuy(pkg.id)} disabled={busy} className={rowClasses}>
+      {inner}
+    </button>
+  );
+}
+
+function PassList({ children }: { children: ReactNode }) {
+  return (
+    <div className="mt-2.5 overflow-hidden rounded-2xl border border-border bg-surface">
+      {children}
     </div>
   );
 }
@@ -170,11 +190,11 @@ export default function PricingPage() {
                 {byTab.starter.length === 0 ? (
                   <p className="mt-4 text-[13px] text-muted">No starter packs available right now.</p>
                 ) : (
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <PassList>
                     {byTab.starter.map((pkg) => (
-                      <Card key={pkg.id} pkg={pkg} signedIn={signedIn} busy={busyId === pkg.id} onBuy={handleBuy} />
+                      <Row key={pkg.id} pkg={pkg} signedIn={signedIn} busy={busyId === pkg.id} onBuy={handleBuy} />
                     ))}
-                  </div>
+                  </PassList>
                 )}
               </div>
             )}
@@ -192,11 +212,11 @@ export default function PricingPage() {
                       <h2 className="mt-6 text-[13px] font-bold uppercase tracking-wide text-muted first:mt-5">
                         {group.label}
                       </h2>
-                      <div className="mt-2.5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                      <PassList>
                         {group.items.map((pkg) => (
-                          <Card key={pkg.id} pkg={pkg} signedIn={signedIn} busy={busyId === pkg.id} onBuy={handleBuy} />
+                          <Row key={pkg.id} pkg={pkg} signedIn={signedIn} busy={busyId === pkg.id} onBuy={handleBuy} />
                         ))}
-                      </div>
+                      </PassList>
                     </div>
                   ))
                 )}
@@ -212,11 +232,11 @@ export default function PricingPage() {
                 {byTab.membership.length === 0 ? (
                   <p className="mt-4 text-[13px] text-muted">No memberships available right now.</p>
                 ) : (
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <PassList>
                     {byTab.membership.map((pkg) => (
-                      <Card key={pkg.id} pkg={pkg} signedIn={signedIn} busy={busyId === pkg.id} onBuy={handleBuy} />
+                      <Row key={pkg.id} pkg={pkg} signedIn={signedIn} busy={busyId === pkg.id} onBuy={handleBuy} />
                     ))}
-                  </div>
+                  </PassList>
                 )}
               </div>
             )}
